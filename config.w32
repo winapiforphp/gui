@@ -1,0 +1,9 @@
+// $Id: config.w32 34 2009-11-12 18:28:17Z auroraeosrose $
+// vim:ft=javascript
+
+ARG_WITH("wingui", "Windows API GUI support", "no");
+
+if (PHP_WINGUI != "no") {
+	EXTENSION("wingui", "php_wingui.c wingui_error.c wingui_input.c win_gui_message.c wingui_object.c wingui_window.c");
+	AC_DEFINE('HAVE_WINGUI', 1, 'Windows API GUI funtionality');
+}

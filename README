@@ -1,0 +1,15 @@
+wingui - desktop user interface with PHP - Only for embed/CLI SAPI
+
+There is a lot to do here, common controls, windowing, DND and some DDE stuff
+
+Works with PHP 5.3.0+
+Works on Windows XP and higher
+
+NOTICE: requires a small patch to windows source when building -
+in php-src/main/config.w32.h comment out the following block of code - this does NOT
+support windows 2000, we want windows XP and higher
+
+#undef _WIN32_WINNT
+#undef NTDDI_VERSION
+#define _WIN32_WINNT 0x500
+#define NTDDI_VERSION  _WIN32_WIN2K

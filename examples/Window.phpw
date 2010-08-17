@@ -1,0 +1,56 @@
+<?php
+use Win\Gui\Window;
+use Win\Gui\Menu;
+use Win\Gui\MenuItem;
+use Win\Gui\Resource\Image;
+use Win\Gui\Resource\Icon;
+use Win\Gui\Resource\Cursor;
+use Win\Gui\Control\Label;
+use Win\Gui\Control\Picture;
+
+// Make a menu
+$toplevel = new Menu();
+$file = new Menu(true);
+$file->insert(0, new MenuItem(100, 'Hi'));
+$toplevel->append(new MenuItem(103, 'Menu', null, $file));
+
+$label = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris et bibendum metus. Quisque egestas, risus dignissim egestas sodales, ligula eros sodales orci, vel tristique risus ligula non eros. Aliquam sit amet varius massa. Sed velit urna, pulvinar sit amet porta in, consequat non dui. Nam ut viverra elit. Aenean velit nunc, accumsan a ullamcorper vel, hendrerit auctor dui. Phasellus sapien magna, dignissim vitae pulvinar et, sodales non ligula. Curabitur nec magna quam, id cursus arcu. Suspendisse ligula mi, scelerisque id cursus faucibus, tempor in dolor. Curabitur arcu tellus, facilisis ut egestas pellentesque, rhoncus adipiscing tortor. Nullam ut libero leo. In hac habitasse platea dictumst.
+
+Morbi a ligula sapien. Cras a justo ac magna imperdiet feugiat. Sed tincidunt, dolor nec adipiscing sollicitudin, augue massa commodo orci, at molestie mauris nisl sit amet quam. Phasellus volutpat libero non diam dictum sit amet pharetra lacus dapibus. Quisque consectetur nunc vel felis auctor id laoreet magna mollis. Proin erat dui, laoreet in posuere sollicitudin, dictum vitae mauris. Praesent fringilla viverra massa, tristique sagittis elit volutpat vitae. Donec vitae ultricies dui. Donec non dolor lacus. Curabitur id massa ac nulla interdum luctus. Nam nibh enim, semper non aliquam nec, scelerisque non nisi. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Maecenas sed arcu at elit porta semper. Aliquam eget enim vel risus blandit aliquet. ';
+
+// create a default window
+$window = new Window;
+$label = new Label($window, $label);
+$label->show();
+
+$bitmap = new Image(__DIR__ . '\passionflower.bmp');
+$picture = new Picture($window, $bitmap, array('x' => $label->width));
+$picture->show();
+
+$icon = new Icon(__DIR__ . '\flower.ico');
+$picture2 = new Picture($window, $icon, array('y' => $label->height));
+$picture2->show();
+
+$cursor = new Cursor(__DIR__ . '\happyflower.ani');
+$picture3 = new Picture($window, $cursor, array('y' => $label->height + $picture2->height));
+$picture3->show();
+
+// show the window and wait 5 seconds, then destroy it
+$window->show();
+
+// tell the application to quit completely when the window is destroyed
+$window->connectSimple(Window::WM_CLOSE, array('Win\Gui\Message', 'end'));
+
+// start the main loop
+Win\Gui\Message::run();
+
+$window = new Window(array('menu' => $toplevel, 'width' => 500, 'height' => 500,
+                           'x' => 15, 'y' => 15, 'text' => 'Menu Window'));
+$window->show();
+
+// tell the application to quit completely when the window is destroyed
+$window->connectSimple(Window::WM_DESTROY, array('Win\Gui\Message', 'postQuit'));
+
+// start the main loop
+Win\Gui\Message::run();
+?>

@@ -1,0 +1,98 @@
+<?php
+use Win\Gui\Window;
+use Win\Gui\Menu;
+use Win\Gui\MenuItem;
+use Win\Gui\Resource\Bitmap;
+
+function show_command($id, $commands) {
+    if(isset($commands[$id])) {
+        echo 'Command ' . $commands[$id] . PHP_EOL;
+    } else {
+        echo 'Quitting';
+        Win\Gui\Message::postQuit();
+    }
+}
+
+$commands = array(100 => '&Open',
+              101 => '&Save',
+              102 => '&Close',
+              103 => '&File',
+              200 => '&Contents',
+              201 => '&Help',
+              202 => '&About',
+              203 => '&Help');
+
+$window = new Window(array('width' => 200, 'height' => 200));
+
+$toplevel = new Menu();
+
+$file = new Menu(true);
+$file->insert(0, new MenuItem(100, $commands[100]));
+$file->insert(1, new MenuItem(101, $commands[101]));
+$file->insert(2, new MenuItem(102, $commands[102]));
+$toplevel->append(new MenuItem(103, $commands[103], null, $file));
+
+$help = new Menu(true);
+$help->insert(0, new MenuItem(200, $commands[200]));
+$help->insert(1, new MenuItem(201, $commands[201]));
+$help->insert(2, new MenuItem(202, $commands[202]));
+$toplevel->insert(0, new MenuItem(203, $commands[203], null, $help));
+
+$window->attachMenu($toplevel);
+
+
+list($width, $height) = MenuItem::getCheckmarkSize();
+$bitmap = new Bitmap(__DIR__ . '\flower.bmp', $width, $height);
+$bitmap_item = new MenuItem(4, 'foobar', $bitmap);
+$help->append($bitmap_item);
+
+$new_bitmap = new Bitmap(__DIR__ . '\snowflake.bmp', $width, $height);
+$bitmap_item->image = $new_bitmap;
+
+$window->text = 'Menu test';
+$window->connectSimple(Window::WM_DESTROY, array('Win\Gui\Message', 'postQuit'));
+$window->connect(Window::WM_COMMAND, 'show_command', $commands);
+$window->show();
+Win\Gui\Message::run();
+
+/*
+
+
+
+
+
+
+
+
+/*
+$item = new MenuItem(500, 'foobar');
+//$item->submenu = $file;
+var_dump($item->text);
+$item->text = 'fuzzball';
+var_dump($item->text);
+$item->id = 322;
+var_dump($item->id);
+$help->append($item);
+$item->id = 501;
+var_dump($item->id);
+var_dump($item->enabled);
+$item->enabled = false;
+var_dump($item->enabled);
+var_dump($item->hilite);
+$item->hilite = true;
+var_dump($item->hilite);
+var_dump($item->checked);
+$item->checked = true;
+var_dump($item->checked);
+var_dump($item->default);
+$item->default = true;
+var_dump($item->default);
+
+var_dump($item);
+$item1 = new MenuItem(3, 'foobar');
+$help->append($item1);
+var_dump($item1->radio);
+$item1->radio = true;
+$item1->checked = true;
+var_dump($item1->radio);*/
+?>

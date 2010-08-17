@@ -1,0 +1,40 @@
+<?php
+// The classes we are using
+use Win\Gui\Window;
+use Win\Gui\ImageList;
+use Win\Gui\Resource\Bitmap;
+
+// create window
+$window = new Window;
+
+// create an empty image list
+$imagelist = new ImageList(32, 32, 4, 4);
+
+// grab some bitmaps and shove them in the imagelist
+$bitmap = new Bitmap(__DIR__ . '\imagelist\Flower.bmp', 32, 32);
+var_dump($imagelist->add($bitmap));
+
+$bitmap = new Bitmap(__DIR__ . '\imagelist\Hive.bmp', 32, 32);
+var_dump($imagelist->add($bitmap));
+
+
+/*
+$icon = Icon::load(Icon::OIC_SHIELD, 16, 16);
+$statusbar->setParts(array(25, 85, -1));
+$statusbar->setIcon($icon, 0);
+$statusbar->setText("Left Text", 1);
+$statusbar->setText("\t Centered Text\t Right Text     ", 2);
+
+$statusbar->setTipText('This is a pretty icon, isn\'t it?', 0);
+$statusbar->setTipText('This is normal', 1);
+$statusbar->setTipText('And this uses tabs to push text', 2);*/
+
+// show the window
+$window->show();
+
+// tell the application to quit completely when the window is destroyed
+$window->connectSimple(Window::WM_DESTROY, array('Win\Gui\Message', 'postQuit'));
+
+// start the main loop
+Win\Gui\Message::run();
+?>

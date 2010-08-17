@@ -1,0 +1,76 @@
+<?php
+// The classes we are using
+use Win\Gui\Window;
+use Win\Gui\Resource\Bitmap;
+use Win\Gui\Resource\Icon;
+use Win\Gui\Resource\Cursor;
+use Win\Gui\Control\Text;
+use Win\Gui\Control\Image;
+use Win\Gui\Control\Frame;
+
+// the text for our big text box
+$label = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris et
+bibendum metus. Quisque egestas, risus dignissim egestas sodales, ligula eros
+sodales orci, vel tristique risus ligula non eros. Aliquam sit amet varius
+massa. Sed velit urna, pulvinar sit amet porta in, consequat non dui. Nam ut
+viverra elit. Aenean velit nunc, accumsan a ullamcorper vel, hendrerit auctor
+dui. Phasellus sapien magna, dignissim vitae pulvinar et, sodales non ligula.
+Curabitur nec magna quam, id cursus arcu. Suspendisse ligula mi, scelerisque id
+cursus faucibus, tempor in dolor. Curabitur arcu tellus, facilisis ut egestas
+pellentesque, rhoncus adipiscing tortor. Nullam ut libero leo. In hac habitasse
+platea dictumst.
+
+Morbi a ligula sapien. Cras a justo ac magna imperdiet feugiat. Sed tincidunt,
+dolor nec adipiscing sollicitudin, augue massa commodo orci, at molestie mauris
+nisl sit amet quam. Phasellus volutpat libero non diam dictum sit amet pharetra
+lacus dapibus. Quisque consectetur nunc vel felis auctor id laoreet magna
+mollis. Proin erat dui, laoreet in posuere sollicitudin, dictum vitae mauris.
+Praesent fringilla viverra massa, tristique sagittis elit volutpat vitae. Donec
+vitae ultricies dui. Donec non dolor lacus. Curabitur id massa ac nulla interdum
+luctus. Nam nibh enim, semper non aliquam nec, scelerisque non nisi. Cum sociis
+natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus.
+Maecenas sed arcu at elit porta semper. Aliquam eget enim vel risus blandit
+aliquet.';
+
+// create window to hold our controls
+$window = new Window;
+
+// create a text box with our big chunk of text, notice we remove the eols and let windows wrap it
+$label = new Text($window, str_replace(PHP_EOL, ' ', $label));
+$label->show();
+
+// Load the bitmap and stick it in an image control
+$bitmap = new Bitmap(__DIR__ . '\passionflower.bmp');
+$picture = new Image($window, $bitmap, array('x' => $label->width));
+$picture->show();
+
+// make some frames
+$frame = new Frame($window, false, Frame::FRAME_COLOR, array('y' => $label->height, 'height' => 50, 'width' => $label->width));
+$frame->show();
+
+// make another frame 8 pixels smaller and put it inside
+$frame = new Frame($frame, true, Frame::BACKGROUND_COLOR, array('height' => $frame->height - 8,
+                                                             'width'  => $frame->width - 8,
+                                                             'x' => 4,
+                                                             'y' => 4));
+$frame->show();
+
+// load an icon - notice that width and height must be set on the icon
+$icon = new Icon(__DIR__ . '\flower.ico', 80, 80);
+$picture2 = new Image($window, $icon, array('x' => $label->width, 'y' => $picture->height));
+$picture2->show();
+
+// load an animated cursor
+$cursor = new Cursor(__DIR__ . '\happyflower.ani');
+$picture3 = new Image($window, $cursor, array('x' => $label->width, 'y' => $picture->height + $picture2->height));
+$picture3->show();
+
+// show the window
+$window->show();
+
+// tell the application to quit completely when the window is destroyed
+$window->connectSimple(Window::WM_DESTROY, array('Win\Gui\Message', 'postQuit'));
+
+// start the main loop
+Win\Gui\Message::run();
+?>

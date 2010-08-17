@@ -1,0 +1,74 @@
+<?php
+// The classes we are using
+use Win\Gui\Window;
+use Win\Gui\ImageList;
+use Win\Gui\Resource\Bitmap;
+use Win\Gui\Control\ListView;
+
+// create window to hold our statusbar
+$window = new Window;
+
+function auto_size() {
+    // TODO get sizing working so the listview autoresizes to the size of the window
+}
+
+// create a listview, stick it in
+$listview = new ListView($window);
+$listview->insertColumn(0, array('text' => 'Year', 'width' => 100));
+$listview->insertColumn(1, array('text' => 'Month', 'width' => 150));
+$listview->insertColumn(2, array('text' => 'Day', 'width' => 50));
+
+var_dump($listview->approximateRect());
+var_dump($listview->arrange());
+
+// create an empty image list
+$imagelist = new ImageList(32, 32, 4, 4);
+
+// grab some bitmaps and shove them in the imagelist
+$bitmap = new Bitmap(__DIR__ . '\imagelist\Flower.bmp', 32, 32);
+var_dump($imagelist->add($bitmap));
+
+$bitmap = new Bitmap(__DIR__ . '\imagelist\Hive.bmp', 32, 32);
+var_dump($imagelist->add($bitmap));
+
+$bitmap = new Bitmap(__DIR__ . '\imagelist\Spider.bmp', 32, 32);
+var_dump($imagelist->add($bitmap));
+
+$bitmap = new Bitmap(__DIR__ . '\imagelist\BeeLeft.bmp', 32, 32);
+var_dump($imagelist->add($bitmap));
+echo "insert items";
+// create an item and insert it?
+var_dump($listview->insertItem(array('text' => 'Flower', 'image' => 0)));
+var_dump($listview->insertItem(array('text' => 'Hive', 'image' => 1)));
+var_dump($listview->insertItem(array('text' => 'Spider', 'image' => 2)));
+var_dump($listview->insertItem(array('text' => 'Bee', 'image' => 3)));
+
+$listview->setImageList($imagelist);
+
+//$listview->setItem(array('text' => 'Foobar', 'row' => 0, 'col' => 2, 'image' => 0));
+//$listview->setItem(array('text' => 'Foobar', 'row' => 1, 'col' => 2, 'image' => 1));
+//$listview->setItem(array('text' => 'Foobar', 'row' => 2, 'col' => 2, 'image' => 2));
+//$listview->setItem(array('text' => 'Foobar', 'row' => 3, 'col' => 2, 'image' => 3));
+//$listview->setItem(array('text' => 'Foobar', 'row' => 4, 'col' => 2, 'image' => 0));
+
+$listview->show();
+/*
+$icon = Icon::load(Icon::OIC_SHIELD, 16, 16);
+$statusbar->setParts(array(25, 85, -1));
+$statusbar->setIcon($icon, 0);
+$statusbar->setText("Left Text", 1);
+$statusbar->setText("\t Centered Text\t Right Text     ", 2);
+
+$statusbar->setTipText('This is a pretty icon, isn\'t it?', 0);
+$statusbar->setTipText('This is normal', 1);
+$statusbar->setTipText('And this uses tabs to push text', 2);*/
+
+// show the window
+$window->show();
+
+// tell the application to quit completely when the window is destroyed
+$window->connectSimple(Window::WM_DESTROY, array('Win\Gui\Message', 'postQuit'));
+
+// start the main loop
+Win\Gui\Message::run();
+?>
