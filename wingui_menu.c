@@ -79,7 +79,7 @@ PHP_METHOD(WinGuiMenu, insert)
 {
 	zend_error_handling error_handling;
 	int position = 0;
-	zval *menuitem;
+	//zval *menuitem;
 	//wingui_menuitem_object *menuitem_object;
 	wingui_menu_object *menu_object = (wingui_menu_object*)wingui_menu_object_get(getThis() TSRMLS_CC);
 

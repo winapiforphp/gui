@@ -308,6 +308,7 @@ int CALLBACK wingui_sort_items_ex(LPARAM index1, LPARAM index2, LPARAM data){
 	//if (bubble_value) {
 	//	zval_ptr_dtor(&bubble_value);
 	//}
+	return SUCCESS;
 }
 PHP_METHOD(WinGuiControlListView, sortItemsById)
 {

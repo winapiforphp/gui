@@ -568,8 +568,8 @@ void wingui_message_destructor(void *object TSRMLS_DC)
        creates a new wingui_handle object and takes care of the internal junk */
 zend_object_value wingui_message_object_new(zend_class_entry *ce TSRMLS_DC)
 {
-	/*
 	zend_object_value retval;
+	/*
 	wingui_message_object *message_object;
 	zval *tmp;
 
@@ -585,8 +585,8 @@ zend_object_value wingui_message_object_new(zend_class_entry *ce TSRMLS_DC)
 
 	retval.handle = zend_objects_store_put(message_object, (zend_objects_store_dtor_t)zend_objects_destroy_object, (zend_objects_free_object_storage_t) wingui_message_destructor, NULL TSRMLS_CC);
 	message_object->handle = retval.handle;
-	retval.handlers = &wingui_object_handlers;
-	return retval; */
+	retval.handlers = &wingui_object_handlers;*/
+	return retval;
 }
 /* }}} */
 
@@ -623,6 +623,7 @@ int wingui_message_read(void *object, zval *member, zval **retval TSRMLS_DC)
 		ZVAL_LONG(*retval, message_object->msg->pt.y);
 	}
 	return SUCCESS;*/
+	return SUCCESS;
 }
 /* }}} */
 
