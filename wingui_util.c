@@ -523,7 +523,7 @@ PHP_MINIT_FUNCTION(wingui_util)
 	ce_wingui_argexception = zend_register_internal_class_ex(&ce, spl_ce_InvalidArgumentException, "InvalidArgumentException" TSRMLS_CC);
 
 	INIT_NS_CLASS_ENTRY(version_ce, PHP_WINGUI_NS, "VersionException", NULL);
-	ce_wingui_versionexception = zend_register_internal_class_ex(&version_ce, ce_wingui_exception, ZEND_NS_NAME(PHP_WINGUI_NS, "Exception") TSRMLS_CC);
+	ce_wingui_versionexception = zend_register_internal_class_ex(&version_ce, spl_ce_RuntimeException, "RuntimeException" TSRMLS_CC);
 
 	/* Setup for generic wingui object stuff, makes custom properties easy */
 	memcpy(&wingui_object_handlers, zend_get_std_object_handlers(), sizeof(zend_object_handlers));

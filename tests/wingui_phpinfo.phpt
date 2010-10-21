@@ -21,4 +21,3 @@ var_dump($data);
 --EXPECTF--
 string(%d) "Win32 Gui => enabled
 Version => %s
-SVN => %s

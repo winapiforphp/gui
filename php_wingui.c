@@ -16,8 +16,6 @@
   +----------------------------------------------------------------------+
 */
 
-/* $Id$ */
-
 #include "php_wingui.h"
 #include "ext/standard/info.h"
 
@@ -28,12 +26,23 @@ zend_class_entry *ce_wingui;
 /* ----------------------------------------------------------------
   Win\Gui User API                                                      
 ------------------------------------------------------------------*/
+
+/* Arg Info */
+ZEND_BEGIN_ARG_INFO(WinGui_isWin7_args, ZEND_SEND_BY_VAL)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO(WinGui_isVista_args, ZEND_SEND_BY_VAL)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO(WinGui_isXp_args, ZEND_SEND_BY_VAL)
+ZEND_END_ARG_INFO()
+
 /* {{{ proto void Win\Gui::isWin7()
     tells if underlying OS has windows 7 support */
 PHP_METHOD(WinGui, isWin7)
 {
 	zend_error_handling error_handling;
-	zend_replace_error_handling(EH_THROW, ce_wingui_exception, &error_handling TSRMLS_CC);
+	zend_replace_error_handling(EH_THROW, ce_wingui_argexception, &error_handling TSRMLS_CC);
 	if (zend_parse_parameters_none() == FAILURE) {
 		return;
 	}
@@ -48,7 +57,7 @@ PHP_METHOD(WinGui, isWin7)
 PHP_METHOD(WinGui, isVista)
 {
 	zend_error_handling error_handling;
-	zend_replace_error_handling(EH_THROW, ce_wingui_exception, &error_handling TSRMLS_CC);
+	zend_replace_error_handling(EH_THROW, ce_wingui_argexception, &error_handling TSRMLS_CC);
 	if (zend_parse_parameters_none() == FAILURE) {
 		return;
 	}
@@ -63,7 +72,7 @@ PHP_METHOD(WinGui, isVista)
 PHP_METHOD(WinGui, isXp)
 {
 	zend_error_handling error_handling;
-	zend_replace_error_handling(EH_THROW, ce_wingui_exception, &error_handling TSRMLS_CC);
+	zend_replace_error_handling(EH_THROW, ce_wingui_argexception, &error_handling TSRMLS_CC);
 	if (zend_parse_parameters_none() == FAILURE) {
 		return;
 	}
@@ -75,9 +84,9 @@ PHP_METHOD(WinGui, isXp)
 
 /* List methods */
 static const zend_function_entry wingui_methods[] = {
-	PHP_ME(WinGui, isWin7, NULL, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-	PHP_ME(WinGui, isVista, NULL, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-	PHP_ME(WinGui, isXp, NULL, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+	PHP_ME(WinGui, isWin7, WinGui_isWin7_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+	PHP_ME(WinGui, isVista, WinGui_isVista_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+	PHP_ME(WinGui, isXp, WinGui_isXp_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
 	{ NULL, NULL, NULL }
 };
 
@@ -121,6 +130,7 @@ BOOL wingui_is_xp (TSRMLS_D)
 /* ----------------------------------------------------------------
   Win\Gui LifeCycle Functions                                                    
 ------------------------------------------------------------------*/
+
 /* Constructor for globals */
 static void wingui_globals_ctor(zend_wingui_globals *wingui_globals TSRMLS_DC) {
 	wingui_globals->hinstance = NULL;
@@ -233,7 +243,7 @@ PHP_RSHUTDOWN_FUNCTION(wingui)
 	/* grab the application-instance handle. */
 	hinstance = WINGUI_G(hinstance);
 
-	worked = UnregisterClass("php_wingui", hinstance);
+	worked = UnregisterClass("php_wingui_window", hinstance);
 	if (worked == 0) {
 		return FAILURE;
 	} else {
@@ -247,7 +257,6 @@ PHP_MINFO_FUNCTION(wingui)
 	php_info_print_table_start();
 	php_info_print_table_row(2, "Win32 Gui", "enabled");
 	php_info_print_table_row(2, "Version", PHP_WINGUI_VERSION);
-	php_info_print_table_row(2, "SVN", "$Id$");
 	php_info_print_table_end();
 }
 
