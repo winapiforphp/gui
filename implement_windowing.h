@@ -41,12 +41,23 @@ ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_INFO_EX(WinGuiWindowing_getPrevious_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 0)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_INFO_EX(WinGuiWindowing_hide_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 0)
+	ZEND_ARG_INFO(0, async)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(WinGuiWindowing_show_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 0)
+	ZEND_ARG_INFO(0, noactivate)
+	ZEND_ARG_INFO(0, async)
+ZEND_END_ARG_INFO()
+
 extern PHP_METHOD(WinGuiWindowing, adjustSize);
 extern PHP_METHOD(WinGuiWindowing, animateShow);
 extern PHP_METHOD(WinGuiWindowing, animateHide);
 
 extern PHP_METHOD(WinGuiWindowing, getNext);
 extern PHP_METHOD(WinGuiWindowing, getPrevious);
+extern PHP_METHOD(WinGuiWindowing, hide);
+extern PHP_METHOD(WinGuiWindowing, show);
 #endif
 
 /*

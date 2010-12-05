@@ -107,6 +107,7 @@ typedef int (*wingui_messages_dispatch_t)(INTERNAL_FUNCTION_PARAMETERS, int msg,
 /* generic HWND handle object, used for most objects including controls */
 typedef struct _wingui_window_object {
 	zend_object  std;
+	zend_bool    is_constructed;
 	HashTable *prop_handler;
 #ifdef ZTS
 	TSRMLS_D;
@@ -207,6 +208,7 @@ BOOL wingui_is_vista (TSRMLS_D);
 BOOL wingui_is_xp(TSRMLS_D);
 
 extern void wingui_resource_construction_wrapper(INTERNAL_FUNCTION_PARAMETERS);
+extern void wingui_window_object_construction_wrapper(INTERNAL_FUNCTION_PARAMETERS);
 
 LRESULT CALLBACK wingui_proc_handler(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 zval* wingui_winproc_callback_dispatch(wingui_window_object *window_object, int msg, zval ***extra, int extra_count, zend_bool *stop_default TSRMLS_DC);

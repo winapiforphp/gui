@@ -437,7 +437,7 @@ PHP_METHOD(WinGuiWindowing, hide)
 }
 /* }}} */
 
-/* {{{ proto bool Win\Gui\Windowing->show([bool noactivate])
+/* {{{ proto bool Win\Gui\Windowing->show([bool noactivate, bool async])
        displays an object in its current size and position.
        if noactivate is true, then the object is not activated
        returns true if the object was previously visible
@@ -445,19 +445,23 @@ PHP_METHOD(WinGuiWindowing, hide)
 PHP_METHOD(WinGuiWindowing, show)
 {
 	zend_error_handling error_handling;
-	zend_bool noactivate = FALSE;
+	zend_bool noactivate = FALSE, async = FALSE;
+	int flag = SW_SHOW;
 	wingui_window_object *window_object = (wingui_window_object*)zend_object_store_get_object(getThis() TSRMLS_CC);
 
 	zend_replace_error_handling(EH_THROW, ce_wingui_argexception, &error_handling TSRMLS_CC);
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|b", &noactivate) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|bb", &noactivate, &async) == FAILURE) {
 		return;
 	}
 	zend_restore_error_handling(&error_handling TSRMLS_CC);
 
 	if (noactivate == TRUE) {
-		RETURN_BOOL(ShowWindow(window_object->window_handle, SW_SHOWNA));
+		flag = SW_SHOWNA;
+	}
+	if (async == TRUE) {
+		RETURN_BOOL(ShowWindowAsync(window_object->window_handle, flag));
 	} else {
-		RETURN_BOOL(ShowWindow(window_object->window_handle, SW_SHOW));
+		RETURN_BOOL(ShowWindow(window_object->window_handle, flag));
 	}
 }
 /* }}} */
@@ -499,8 +503,8 @@ static zend_function_entry wingui_windowing_functions[] = {
 	PHP_ME(WinGuiWindowing, setPlacement, NULL, ZEND_ACC_PUBLIC| ZEND_ACC_ABSTRACT)
 	PHP_ME(WinGuiWindowing, setPos, NULL, ZEND_ACC_PUBLIC| ZEND_ACC_ABSTRACT)
 	PHP_ME(WinGuiWindowing, setText, NULL, ZEND_ACC_PUBLIC| ZEND_ACC_ABSTRACT)
-	PHP_ME(WinGuiWindowing, show, NULL, ZEND_ACC_PUBLIC| ZEND_ACC_ABSTRACT)
-	PHP_ME(WinGuiWindowing, hide, NULL, ZEND_ACC_PUBLIC| ZEND_ACC_ABSTRACT)
+	PHP_ABSTRACT_ME(WinGuiWindowing, show, WinGuiWindowing_show_args)
+	PHP_ABSTRACT_ME(WinGuiWindowing, hide, WinGuiWindowing_hide_args)
 	{NULL, NULL, NULL}
 };
 

@@ -28,6 +28,11 @@
 /* All the classes in this file */
 zend_class_entry *ce_wingui_window;
 
+static HashTable wingui_window_prop_handlers;
+static HashTable wingui_window_callback_map;
+static zend_object_handlers wingui_window_object_handlers;
+static zend_function wingui_window_constructor_wrapper;
+
 /* ----------------------------------------------------------------
   Win\Gui\Window Userland API                                      
 ------------------------------------------------------------------*/
@@ -79,6 +84,43 @@ ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_INFO(WinGuiWindow_unregisterClass_args, ZEND_SEND_BY_VAL)
 	ZEND_ARG_INFO(0, name)
 ZEND_END_ARG_INFO()
+
+/* {{{ proto void Win\Gui\Window::__construct([type, text, parent, ][array options])
+     Create a new Window - types are TOPLEVEL (default), POPUP or CHILD
+     x and y are in client coordinates not screen coordinates,
+     height and width are client area, not window area */
+PHP_METHOD(WinGuiWindow, __construct)
+{
+	HWND handle;
+	wingui_window_object *window_object = (wingui_window_object*)zend_object_store_get_object(getThis() TSRMLS_CC);
+
+	handle = CreateWindowExA(
+		0,
+        "php_wingui_window", 
+        "Test",
+        WS_OVERLAPPEDWINDOW,
+        CW_USEDEFAULT,
+        CW_USEDEFAULT,
+        CW_USEDEFAULT,
+        CW_USEDEFAULT,
+        NULL,
+        NULL,
+        GetModuleHandle(NULL),
+        (LPVOID) NULL);
+
+    if (!handle) {
+		winsystem_create_error(GetLastError(), ce_wingui_exception TSRMLS_CC);
+		return;
+	} else {
+		php_printf("so far, so good");
+		window_object->window_handle = handle;
+		window_object->is_constructed = TRUE;
+		window_object->object_zval = getThis();
+		//window_obj->window_proc = (WNDPROC) SetWindowLongPtr(hwnd, GWLP_WNDPROC, (LONG_PTR) wingui_proc_handler);
+		SetWindowLongPtr(handle, GWLP_USERDATA, (LONG_PTR) window_object);
+	}
+}
+/* }}} */
 
 /* {{{ proto array Win\Gui\Window::allowSetForeground([long process_id])
        allows a specific process with a process_id to set the foreground window.
@@ -634,6 +676,8 @@ PHP_METHOD(WinGuiWindow, unregisterClass)
 
 /* Window Methods */
 static zend_function_entry wingui_window_functions[] = {
+	PHP_ME(WinGuiWindow, __construct, NULL, ZEND_ACC_PUBLIC | ZEND_ACC_CTOR)
+
 	PHP_ME(WinGuiWindow, allowSetForeground, WinGuiWindow_allowSetForeground_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
 	PHP_ME(WinGuiWindow, getPopupPosition, WinGuiWindow_getPopupPosition_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
 	PHP_ME(WinGuiWindow, bringToTop, WinGuiWindow_bringToTop_args, ZEND_ACC_PUBLIC)
@@ -666,6 +710,8 @@ static zend_function_entry wingui_window_functions[] = {
 	PHP_ME(WinGuiWindowing, animateHide, WinGuiWindowing_animateHide_args, ZEND_ACC_PUBLIC)
 	PHP_ME(WinGuiWindowing, getNext, WinGuiWindowing_getNext_args, ZEND_ACC_PUBLIC)
 	PHP_ME(WinGuiWindowing, getPrevious, WinGuiWindowing_getPrevious_args, ZEND_ACC_PUBLIC)
+	PHP_ME(WinGuiWindowing, hide, WinGuiWindowing_hide_args, ZEND_ACC_PUBLIC)
+	PHP_ME(WinGuiWindowing, show, WinGuiWindowing_show_args, ZEND_ACC_PUBLIC)
 	{NULL, NULL, NULL}
 };
 /* }}} */
@@ -673,6 +719,154 @@ static zend_function_entry wingui_window_functions[] = {
 /* ----------------------------------------------------------------
   Win\Gui\Window Custom Object magic                               
 ------------------------------------------------------------------*/
+/* {{{ wingui_window_construction_wrapper
+       wraps around the constructor to make sure parent::__construct is always called  */
+static void wingui_window_construction_wrapper(INTERNAL_FUNCTION_PARAMETERS) {
+	zval *this = getThis();
+	wingui_window_object *tobj;
+	zend_class_entry *this_ce;
+	zend_function *zf;
+	zend_fcall_info fci = {0};
+	zend_fcall_info_cache fci_cache = {0};
+	zval *retval_ptr = NULL;
+	unsigned i;
+ 
+	tobj = zend_object_store_get_object(this TSRMLS_CC);
+	zf = zend_get_std_object_handlers()->get_constructor(this TSRMLS_CC);
+	this_ce = Z_OBJCE_P(this);
+ 
+	fci.size = sizeof(fci);
+	fci.function_table = &this_ce->function_table;
+	fci.object_ptr = this;
+	/* fci.function_name = ; not necessary to bother */
+	fci.retval_ptr_ptr = &retval_ptr;
+	fci.param_count = ZEND_NUM_ARGS();
+	fci.params = emalloc(fci.param_count * sizeof *fci.params);
+	/* Or use _zend_get_parameters_array_ex instead of loop: */
+	for (i = 0; i < fci.param_count; i++) {
+		fci.params[i] = (zval **) (zend_vm_stack_top(TSRMLS_C) - 1 -
+			(fci.param_count - i));
+	}
+	fci.object_ptr = this;
+	fci.no_separation = 0;
+ 
+	fci_cache.initialized = 1;
+	fci_cache.called_scope = EG(current_execute_data)->called_scope;
+	fci_cache.calling_scope = EG(current_execute_data)->current_scope;
+	fci_cache.function_handler = zf;
+	fci_cache.object_ptr = this;
+ 
+	zend_call_function(&fci, &fci_cache TSRMLS_CC);
+	if (!EG(exception) && tobj->is_constructed == 0)
+		zend_throw_exception_ex(ce_wingui_exception, 0 TSRMLS_CC,
+			"parent::__construct() must be called in %s::__construct()", this_ce->name);
+	efree(fci.params);
+	zval_ptr_dtor(&retval_ptr);
+}
+/* }}} */
+
+/* {{{ wingui_window_get_constructor
+       gets the constructor for the class  */
+static zend_function *wingui_window_get_constructor(zval *object TSRMLS_DC)
+{
+	/* Could always return constr_wrapper_fun, but it's uncessary to call the
+	 * wrapper if instantiating the superclass */
+	if (Z_OBJCE_P(object) == ce_wingui_window)
+		return zend_get_std_object_handlers()->
+			get_constructor(object TSRMLS_CC);
+	else
+		return &wingui_window_constructor_wrapper;
+}
+/* }}} */
+
+/* cleans up the handle object */
+void wingui_window_object_free(void *object TSRMLS_DC)
+{
+	wingui_window_object *window_object = (wingui_window_object *)object;
+	HWND parent;
+	int style;
+
+	/* if our window object was temporary, we have to deref it */
+	if (window_object->parent_is_temp)
+	{
+		style = GetWindowLongPtr(window_object->window_handle, GWL_STYLE);
+		/* Grab the stored parent handle */
+		if (style & WS_POPUP) {
+			parent = GetAncestor(window_object->window_handle, GA_PARENT);
+		} else {
+			parent = GetParent(window_object->window_handle);
+		}
+
+		if (parent && IsWindow(parent)) {
+			wingui_window_object *parent_object = (wingui_window_object*)GetWindowLongPtr(parent, GWLP_USERDATA);
+			if (parent_object->object_zval) {
+				Z_DELREF_P(parent_object->object_zval);
+			}
+		}
+	}
+	/*
+	if (window_object->data.window.menu) {
+		Z_DELREF_P(window_object->data.window.menu);
+		window_object->data.window.menu = NULL;
+	}
+	if (window_object->data.window.image) {
+		Z_DELREF_P(window_object->data.window.image);
+		window_object->data.window.image = NULL;
+	}*/
+
+	zend_hash_destroy(window_object->std.properties);
+	FREE_HASHTABLE(window_object->std.properties);
+
+	if(window_object->window_handle != NULL && IsWindow(window_object->window_handle)){
+		DestroyWindow(window_object->window_handle);
+	}
+
+	/* Destroy window will still pump things into the proc! because of this, we don't destroy the callback
+	  map until AFTER we have destroyed the window */
+	wingui_messaging_destructor_helper(window_object->registered_callbacks TSRMLS_CC);
+
+	zend_hash_destroy(window_object->registered_callbacks);
+	FREE_HASHTABLE(window_object->registered_callbacks);
+	
+	efree(object);
+}
+/* }}} */
+
+/* {{{ wingui_window_object_create
+       creates a new wingui window object and takes care of the internal junk */
+zend_object_value wingui_window_object_create(zend_class_entry *ce TSRMLS_DC)
+{
+	zend_object_value retval;
+	wingui_window_object *window_object;
+
+	window_object = ecalloc(1, sizeof(wingui_window_object));
+	zend_object_std_init((zend_object *) window_object, ce TSRMLS_CC);
+
+	window_object->is_constructed = FALSE;
+	window_object->parent_is_temp = 0;
+	window_object->window_handle = NULL;
+	window_object->prop_handler = &wingui_window_prop_handlers;
+	window_object->callback_map = &wingui_window_callback_map;
+	window_object->window_proc = NULL;
+	//window_object->messages_results = wingui_window_messages_results;
+	//window_object->messages_cracker = wingui_window_messages_cracker;
+	//window_object->messages_packer = wingui_window_messages_packer;
+#ifdef ZTS
+	window_object->TSRMLS_C = TSRMLS_C;
+#endif
+
+	zend_hash_copy(window_object->std.properties, &ce->default_properties,
+		(copy_ctor_func_t) zval_add_ref, NULL, sizeof(zval *));
+
+	ALLOC_HASHTABLE(window_object->registered_callbacks);
+	zend_hash_init(window_object->registered_callbacks, 0, NULL, NULL, 0);
+
+	retval.handle = zend_objects_store_put(window_object, (zend_objects_store_dtor_t)zend_objects_destroy_object,
+		(zend_objects_free_object_storage_t) wingui_window_object_free, NULL TSRMLS_CC);
+	retval.handlers = &wingui_window_object_handlers;
+	return retval;
+}
+/* }}} */
 
 /* ----------------------------------------------------------------
   Win\Gui\Window LifeCycle Functions                               
@@ -681,9 +875,46 @@ PHP_MINIT_FUNCTION(wingui_window)
 {
 	zend_class_entry ce;
 
+	memcpy(&wingui_window_object_handlers, &wingui_object_handlers,
+		sizeof wingui_window_object_handlers);
+	wingui_window_object_handlers.get_constructor = wingui_window_get_constructor;
+	//wingui_window_object_handlers.get_debug_info = winsystem_mutex_get_debug_info;
+
 	INIT_NS_CLASS_ENTRY(ce, PHP_WINGUI_NS, "Window", wingui_window_functions);
 	ce_wingui_window = zend_register_internal_class(&ce TSRMLS_CC);
+	ce_wingui_window->create_object = wingui_window_object_create;
 
+	//zend_class_implements(ce_wingui_window TSRMLS_CC, 3, ce_wingui_windowing,
+	//	ce_wingui_messaging, ce_wingui_inputing);
+
+	wingui_window_constructor_wrapper.type = ZEND_INTERNAL_FUNCTION;
+	wingui_window_constructor_wrapper.common.function_name = "internal_construction_wrapper";
+	wingui_window_constructor_wrapper.common.scope = ce_wingui_window;
+	wingui_window_constructor_wrapper.common.fn_flags = ZEND_ACC_PROTECTED;
+	wingui_window_constructor_wrapper.common.prototype = NULL;
+	wingui_window_constructor_wrapper.common.required_num_args = 0;
+	wingui_window_constructor_wrapper.common.arg_info = NULL;
+	wingui_window_constructor_wrapper.common.pass_rest_by_reference = 0;
+	wingui_window_constructor_wrapper.common.return_reference = 0;
+	wingui_window_constructor_wrapper.internal_function.handler = wingui_window_construction_wrapper;
+	wingui_window_constructor_wrapper.internal_function.module = EG(current_module);
+
+	/* Callback map for window */
+	zend_hash_init(&wingui_window_callback_map, 0, NULL, NULL, 1);
+
+	/* Callback map for properties */
+	zend_hash_init(&wingui_window_prop_handlers, 0, NULL, NULL, 1);
+
+	return SUCCESS;
+}
+/* }}} */
+
+/* {{{ PHP_MSHUTDOWN_FUNCTION(wingui_window)
+       frees the callback map and property handler hash */
+PHP_MSHUTDOWN_FUNCTION(wingui_window)
+{
+	zend_hash_destroy(&wingui_window_callback_map);
+	zend_hash_destroy(&wingui_window_prop_handlers);
 	return SUCCESS;
 }
 /* }}} */
