@@ -16,13 +16,11 @@
   +----------------------------------------------------------------------+
 */
 
-/* $Id$ */
-
 #ifndef PHP_WINGUI_H
 #define PHP_WINGUI_H
 
 /* ----------------------------------------------------------------
-  Setup and includes                                                  
+  Setup and includes                                              
 ------------------------------------------------------------------*/
 
 /* We want the fancy common controls api stuff for newer versions
@@ -31,7 +29,7 @@ pre-xp versions of common controls to work, as well as new versions */
 #define _WIN32_WINNT                     0x0600
 #define _WIN32_IE                        0x0600
 #define ISOLATION_AWARE_ENABLED          1
-#define OEMRESOURCE						 1
+#define OEMRESOURCE                      1
 
 #include "wingui_version.h"
 #include "php.h"
@@ -54,14 +52,12 @@ pre-xp versions of common controls to work, as well as new versions */
 /* generic object - for all objects */
 typedef struct _wingui_generic_object {
 	zend_object  std;
-	zend_object_handle handle;
 	HashTable *prop_handler;
 } wingui_generic_object;
 
 /* object for menu resources */
 typedef struct _wingui_menu_object {
 	zend_object  std;
-	zend_object_handle handle;
 	HashTable *prop_handler;
 	HMENU menu_handle;
 	HWND window_handle;
@@ -70,7 +66,6 @@ typedef struct _wingui_menu_object {
 /* object for menuitem structs */
 typedef struct _wingui_menuitem_object {
 	zend_object  std;
-	zend_object_handle handle;
 	HashTable *prop_handler;
 	MENUITEMINFO *menuiteminfo;
 	HMENU parent_menu;
@@ -82,7 +77,6 @@ typedef struct _wingui_menuitem_object {
 /* object for imagelists */
 typedef struct _wingui_imagelist_object {
 	zend_object  std;
-	zend_object_handle handle;
 	HIMAGELIST imagelist;
 } wingui_imagelist_object;
 
@@ -113,7 +107,6 @@ typedef int (*wingui_messages_dispatch_t)(INTERNAL_FUNCTION_PARAMETERS, int msg,
 /* generic HWND handle object, used for most objects including controls */
 typedef struct _wingui_window_object {
 	zend_object  std;
-	zend_object_handle handle;
 	HashTable *prop_handler;
 #ifdef ZTS
 	TSRMLS_D;
@@ -158,10 +151,10 @@ typedef struct _wingui_callback_t {
 
 /* Image/Resource objects */
 typedef struct _wingui_resource_object {
-	zend_object  std;
-	zend_object_handle handle;
-	HGDIOBJ resource_handle;
-	zend_bool shared;
+	zend_object	std;
+	zend_bool	is_constructed;
+	HGDIOBJ		resource_handle;
+	zend_bool	shared;
 } wingui_resource_object;
 
 /* ----------------------------------------------------------------
@@ -170,6 +163,10 @@ typedef struct _wingui_resource_object {
 extern zend_class_entry *ce_wingui_exception;
 extern zend_class_entry *ce_wingui_argexception;
 extern zend_class_entry *ce_wingui_versionexception;
+
+extern zend_class_entry *ce_wingui_resource_cursor;
+
+
 
 extern zend_class_entry *ce_wingui_messaging;
 extern zend_class_entry *ce_wingui_inputing;
@@ -185,103 +182,42 @@ extern zend_class_entry *ce_wingui_resource_icon;
 extern zend_class_entry *ce_wingui_resource_bitmap;
 extern zend_class_entry *ce_wingui_imagelist;
 
-/* ----------------------------------------------------------------
-  Valid object checkers                                            
-------------------------------------------------------------------*/
+/* Shared object items */
 extern zend_object_handlers wingui_object_handlers;
 extern HashTable wingui_control_prop_handlers;
 
-static inline wingui_window_object* wingui_window_object_get(zval *zobj TSRMLS_DC)
-{
-    wingui_window_object *pobj = zend_object_store_get_object(zobj TSRMLS_CC);
-    if (pobj->window_handle == NULL) {
-		php_error(E_ERROR, "Internal window handle missing in %s class, you must call parent::__construct in extended classes", Z_OBJCE_P(zobj)->name);
-		return NULL;
-    }
-	if (IsWindow(pobj->window_handle) == 0) {
-		php_error(E_RECOVERABLE_ERROR, "Internal window handle is no longer valid");
-		return NULL;
-	}
-    return pobj;
-}
+/* ----------------------------------------------------------------
+  Macros                                               
+------------------------------------------------------------------*/
+#define PHP_WINGUI_NS ZEND_NS_NAME("Win", "Gui")
 
-static inline wingui_window_object* wingui_window_object_juggle(wingui_generic_object *object)
-{
-    wingui_window_object *pobj = (wingui_window_object *) object;
-	if (pobj->window_handle == NULL) {
-		php_error(E_ERROR, "Internal window handle missing, you must call parent::__construct in extended classes");
-		return NULL;
-    }
-	if (IsWindow(pobj->window_handle) == 0) {
-		php_error(E_RECOVERABLE_ERROR, "Internal window handle is no longer valid");
-		return NULL;
-	}
-    return pobj;
-}
+#define REGISTER_WINGUI_NAMED_CONST(ce, name, value) \
+	zend_declare_class_constant_long(ce, #name, sizeof(#name)-1, (long)value TSRMLS_CC);
+#define REGISTER_WINGUI_CONSTANT(ce, val) \
+	zend_declare_class_constant_long((ce), #val, sizeof(#val) - 1, (long)(val) TSRMLS_CC);
+#define REGISTER_WINGUI_MESSAGE_CONSTANT(ce, val, map, cb) \
+	zend_declare_class_constant_long((ce), #val, sizeof(#val) - 1, (val) TSRMLS_CC); \
+	zend_hash_index_update((map), (val), (void*)#cb, sizeof(#cb) + 2, NULL);
 
-static inline wingui_menu_object* wingui_menu_object_get(zval *zobj TSRMLS_DC)
-{
-    wingui_menu_object *pobj = zend_object_store_get_object(zobj TSRMLS_CC);
-    if (pobj->menu_handle == NULL) {
-		php_error(E_ERROR, "Internal menu handle missing in %s class, you must call parent::__construct in extended classes", Z_OBJCE_P(zobj)->name);
-		return NULL;
-    }
-	if (IsMenu(pobj->menu_handle) == 0) {
-		php_error(E_ERROR, "Internal menu handle is no longer valid");
-		return NULL;
-	}
-    return pobj;
-}
+/* ----------------------------------------------------------------
+  C API                                             
+------------------------------------------------------------------*/
+BOOL wingui_is_win7 (TSRMLS_D);
+BOOL wingui_is_vista (TSRMLS_D);
+BOOL wingui_is_xp(TSRMLS_D);
 
-static inline wingui_menuitem_object* wingui_menuitem_object_get(zval *zobj TSRMLS_DC)
-{
-    wingui_menuitem_object *pobj = zend_object_store_get_object(zobj TSRMLS_CC);
-    if (pobj->menuiteminfo == NULL) {
-		php_error(E_ERROR, "Internal menuitem data missing in %s class, you must call parent::__construct in extended classes", Z_OBJCE_P(zobj)->name);
-		return NULL;
-    }
-    return pobj;
-}
+extern void wingui_resource_construction_wrapper(INTERNAL_FUNCTION_PARAMETERS);
 
-static inline wingui_menuitem_object* wingui_menuitem_object_juggle(wingui_generic_object *object)
-{
-    wingui_menuitem_object *pobj = (wingui_menuitem_object *) object;
-    if (pobj->menuiteminfo == NULL) {
-		php_error(E_ERROR, "Internal menuitem data missing, you must call parent::__construct in extended classes");
-		return NULL;
-    }
-    return pobj;
-}
+LRESULT CALLBACK wingui_proc_handler(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
+zval* wingui_winproc_callback_dispatch(wingui_window_object *window_object, int msg, zval ***extra, int extra_count, zend_bool *stop_default TSRMLS_DC);
 
-static inline wingui_imagelist_object* wingui_imagelist_object_get(zval *zobj TSRMLS_DC)
-{
-    wingui_imagelist_object *pobj = zend_object_store_get_object(zobj TSRMLS_CC);
-    if (pobj->imagelist == NULL) {
-		php_error(E_ERROR, "Internal imagelist data missing in %s class, you must call parent::__construct in extended classes", Z_OBJCE_P(zobj)->name);
-		return NULL;
-    }
-    return pobj;
-}
+void wingui_messaging_destructor_helper(HashTable *registered_callbacks TSRMLS_DC);
+int wingui_messaging_connect_helper(HashTable* callback_table, int message_code, zval*** args, int argc, zend_fcall_info finfo, zend_fcall_info_cache fcache, int send_args, int send_return TSRMLS_DC);
+int unset_abstract_flag(zend_function *func TSRMLS_DC, int num_args, va_list args, zend_hash_key *hash_key);
 
-static inline wingui_resource_object* wingui_resource_object_get(zval *zobj TSRMLS_DC)
-{
-    wingui_resource_object *pobj = zend_object_store_get_object(zobj TSRMLS_CC);
-    if (pobj->resource_handle == NULL) {
-		php_error(E_ERROR, "Internal resource handle missing in %s class, you must call parent::__construct in extended classes", Z_OBJCE_P(zobj)->name);
-		return NULL;
-    }
-    return pobj;
-}
+void wingui_window_object_destructor(void *object TSRMLS_DC);
 
-static inline void wingui_register_prop_handler(HashTable *prop_handlers, zend_class_entry *ce, char *name, wingui_prop_read_int_t read_func, wingui_prop_write_t write_func TSRMLS_DC)
-{
-	wingui_prop_handler hnd;
-
-	hnd.read_func = read_func;
-	hnd.write_func = write_func;
-	zend_hash_add(prop_handlers, name, strlen(name)+1, &hnd, sizeof(wingui_prop_handler), NULL);
-	zend_declare_property_null(ce, name, strlen(name), ZEND_ACC_PUBLIC TSRMLS_CC);
-}
+zval ***wingui_window_messages_cracker(int msg, WPARAM *wParam, LPARAM *lParam, int *extra_count TSRMLS_DC);
 
 static inline zval ***wingui_callback_extra_zvals_ctor(int argc)
 {
@@ -309,61 +245,18 @@ static inline void wingui_callback_extra_zvals_dtor(int argc, zval ***argv)
 }
 
 /* ----------------------------------------------------------------
-  Macros                                               
+  Object Globals, lifecycle and static linking                 
 ------------------------------------------------------------------*/
-#define PHP_WINGUI_NS ZEND_NS_NAME("Win", "Gui")
-
-#define REGISTER_WINGUI_NAMED_CONST(ce, name, value) \
-	zend_declare_class_constant_long(ce, #name, sizeof(#name)-1, (long)value TSRMLS_CC);
-#define REGISTER_WINGUI_CONSTANT(ce, val) \
-	zend_declare_class_constant_long((ce), #val, sizeof(#val) - 1, (long)(val) TSRMLS_CC);
-#define REGISTER_WINGUI_MESSAGE_CONSTANT(ce, val, map, cb) \
-	zend_declare_class_constant_long((ce), #val, sizeof(#val) - 1, (val) TSRMLS_CC); \
-	zend_hash_index_update((map), (val), (void*)#cb, sizeof(#cb) + 2, NULL);
-
-/* ----------------------------------------------------------------
-  C API                                             
-------------------------------------------------------------------*/
-BOOL wingui_is_win7 (TSRMLS_D);
-BOOL wingui_is_vista (TSRMLS_D);
-BOOL wingui_is_xp(TSRMLS_D);
-
-void wingui_create_error(int error, zend_class_entry *ce TSRMLS_DC);
-int wingui_juggle_type(zval *value, int type TSRMLS_DC);
-LRESULT CALLBACK wingui_proc_handler(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
-zval* wingui_winproc_callback_dispatch(wingui_window_object *window_object, int msg, zval ***extra, int extra_count, zend_bool *stop_default TSRMLS_DC);
-
-void wingui_messaging_destructor_helper(HashTable *registered_callbacks TSRMLS_DC);
-int wingui_messaging_connect_helper(HashTable* callback_table, int message_code, zval*** args, int argc, zend_fcall_info finfo, zend_fcall_info_cache fcache, int send_args, int send_return TSRMLS_DC);
-int unset_abstract_flag(zend_function *func TSRMLS_DC, int num_args, va_list args, zend_hash_key *hash_key);
-
-void wingui_window_object_destructor(void *object TSRMLS_DC);
-
-zval ***wingui_window_messages_cracker(int msg, WPARAM *wParam, LPARAM *lParam, int *extra_count TSRMLS_DC);
-/* ----------------------------------------------------------------
-  Object Globals, lifecycle and static linking                                                
-------------------------------------------------------------------*/
-
-/* Global vars */
-ZEND_BEGIN_MODULE_GLOBALS(wingui)
-	HINSTANCE hinstance;
-	BOOL end_main;
-	char* common_controls;
-	char* common_dialog;
-ZEND_END_MODULE_GLOBALS(wingui)
-
-#ifdef ZTS
-# define WINGUI_G(v)   TSRMG(wingui_globals_id, zend_wingui_globals*, v)
-#else
-# define WINGUI_G(v)   (wingui_globals.v)
-#endif
 
 /* Lifecycle Function Declarations */
 PHP_MINIT_FUNCTION(wingui);
 PHP_MSHUTDOWN_FUNCTION(wingui);
 PHP_RINIT_FUNCTION(wingui);
 PHP_MINFO_FUNCTION(wingui);
+
+/* Utility stuff */
 PHP_MINIT_FUNCTION(wingui_util);
+PHP_MINIT_FUNCTION(wingui_object);
 
 /* Interfaces */
 PHP_MINIT_FUNCTION(wingui_messaging);
@@ -376,6 +269,7 @@ PHP_MINIT_FUNCTION(wingui_input);
 PHP_MINIT_FUNCTION(wingui_window);
 
 /* Resources*/
+PHP_MINIT_FUNCTION(wingui_resource);
 PHP_MINIT_FUNCTION(wingui_resource_bitmap);
 PHP_MINIT_FUNCTION(wingui_resource_icon);
 PHP_MINIT_FUNCTION(wingui_resource_cursor);

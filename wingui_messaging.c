@@ -16,12 +16,9 @@
   +----------------------------------------------------------------------+
 */
 
-/* $Id$ */
-
 #include "php_wingui.h"
 #include "zend_exceptions.h"
-
-ZEND_DECLARE_MODULE_GLOBALS(wingui);
+#include "implement_messaging.h"
 
 /* All the classes in this file */
 zend_class_entry *ce_wingui_messaging;
@@ -30,62 +27,8 @@ zend_class_entry *ce_wingui_messaging;
 int wingui_messaging_connect_helper(HashTable* callback_table, int message_code, zval*** args, int argc, zend_fcall_info finfo, zend_fcall_info_cache fcache, int send_args, int send_return TSRMLS_DC);
 
 /* ----------------------------------------------------------------
-  Win\Gui\Messaging Userland API                                                      
+  Win\Gui\Messaging Userland API
 ------------------------------------------------------------------*/
-ZEND_BEGIN_ARG_INFO(WinGuiMessaging_connect_args, ZEND_SEND_BY_VAL)
-        ZEND_ARG_INFO(0, msg)
-        ZEND_ARG_INFO(0, callback)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO(WinGuiMessaging_connectFull_args, ZEND_SEND_BY_VAL)
-        ZEND_ARG_INFO(0, msg)
-        ZEND_ARG_INFO(0, callback)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO(WinGuiMessaging_connectSimple_args, ZEND_SEND_BY_VAL)
-        ZEND_ARG_INFO(0, msg)
-        ZEND_ARG_INFO(0, callback)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO(WinGuiMessaging_disconnect_args, ZEND_SEND_BY_VAL)
-        ZEND_ARG_INFO(0, msg)
-        ZEND_ARG_INFO(0, id)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO_EX(WinGuiMessaging_get_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 0)
-	ZEND_ARG_INFO(0, filtermin)
-	ZEND_ARG_INFO(0, filtermax)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO_EX(WinGuiMessaging_peek_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 0)
-	ZEND_ARG_INFO(0, filtermin)
-	ZEND_ARG_INFO(0, filtermax)
-	ZEND_ARG_INFO(0, remove)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO(WinGuiMessaging_post_args, 0)
-	ZEND_ARG_INFO(0, msg)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO(WinGuiMessaging_send_args, 0)
-	ZEND_ARG_INFO(0, msg)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO(WinGuiMessaging_sendNotify_args, 0)
-	ZEND_ARG_INFO(0, msg)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO(WinGuiMessaging_sendCallback_args, 0)
-	ZEND_ARG_INFO(0, msg)
-	ZEND_ARG_INFO(0, callback)
-	ZEND_ARG_INFO(0, data)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO(WinGuiMessaging_sendTimeout_args, 0)
-	ZEND_ARG_INFO(0, msg)
-	ZEND_ARG_INFO(0, flags)
-	ZEND_ARG_INFO(0, timeout)
-ZEND_END_ARG_INFO()
 
 /* {{{ proto int Win\Gui\Messaging->connect(int message, callback [, optional user args])
        Register a callback for a message, this version will push additional
@@ -98,7 +41,7 @@ PHP_METHOD(WinGuiMessaging, connect)
 	zend_fcall_info_cache fcache;
 	zval ***args = NULL;
 	int argc = 0;
-	wingui_window_object *window_object = (wingui_window_object*)wingui_window_object_get(getThis() TSRMLS_CC);
+	wingui_window_object *window_object = (wingui_window_object*)zend_object_store_get_object(getThis() TSRMLS_CC);
 
 	zend_replace_error_handling(EH_THROW, ce_wingui_argexception, &error_handling TSRMLS_CC);
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "lf*", &message_code, &finfo, &fcache, &args, &argc) == FAILURE) {
@@ -122,7 +65,7 @@ PHP_METHOD(WinGuiMessaging, connectFull)
 	zend_fcall_info_cache fcache;
 	zval ***args = NULL;
 	int argc = 0;
-	wingui_window_object *window_object = (wingui_window_object*)wingui_window_object_get(getThis() TSRMLS_CC);
+	wingui_window_object *window_object = (wingui_window_object*)zend_object_store_get_object(getThis() TSRMLS_CC);
 
 	zend_replace_error_handling(EH_THROW, ce_wingui_argexception, &error_handling TSRMLS_CC);
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "lf*", &message_code, &finfo, &fcache, &args, &argc) == FAILURE) {
@@ -144,7 +87,7 @@ PHP_METHOD(WinGuiMessaging, connectSimple)
 	zend_fcall_info_cache fcache;
 	zval ***args = NULL;
 	int argc = 0;
-	wingui_window_object *window_object = (wingui_window_object*)wingui_window_object_get(getThis() TSRMLS_CC);
+	wingui_window_object *window_object = (wingui_window_object*)zend_object_store_get_object(getThis() TSRMLS_CC);
 
 	zend_replace_error_handling(EH_THROW, ce_wingui_argexception, &error_handling TSRMLS_CC);
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "lf*", &message_code, &finfo, &fcache, &args, &argc) == FAILURE) {
@@ -163,7 +106,7 @@ PHP_METHOD(WinGuiMessaging, disconnect)
 	zend_error_handling error_handling;
 	int msg, id;
 	HashTable *message, **ptr_message;
-	wingui_window_object *window_object = (wingui_window_object*)wingui_window_object_get(getThis() TSRMLS_CC);
+	wingui_window_object *window_object = (wingui_window_object*)zend_object_store_get_object(getThis() TSRMLS_CC);
 	        
 	zend_replace_error_handling(EH_THROW, ce_wingui_argexception, &error_handling TSRMLS_CC);
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ll", &msg, &id) == FAILURE) {
@@ -187,7 +130,7 @@ PHP_METHOD(WinGuiMessaging, disconnect)
 }
 /* }}} */
 
-/* {{{ proto int Win\Gui\Messaging->getMessage([, int filtermin, int filtermax])
+/* {{{ proto int Win\Gui\Messaging->get([, int filtermin, int filtermax])
        Retrieves a message posted to the current object
 	   The function dispatches incoming sent messages until a posted message is available for retrieval. */
 PHP_METHOD(WinGuiMessaging, get)
@@ -216,7 +159,7 @@ PHP_METHOD(WinGuiMessaging, post)
 	
 	zval ***args = NULL;
 	int argc = 0;
-	wingui_window_object *window_object = (wingui_window_object*)zend_objects_get_address(getThis() TSRMLS_CC);
+	wingui_window_object *window_object = (wingui_window_object*)zend_object_store_get_object(getThis() TSRMLS_CC);
 	
 	/* parse once because we MUST have a msg to mess with */
 	zend_replace_error_handling(EH_THROW, ce_wingui_argexception, &error_handling TSRMLS_CC);
@@ -250,7 +193,7 @@ PHP_METHOD(WinGuiMessaging, send)
 	
 	zval ***args = NULL;
 	int argc = 0;
-	wingui_window_object *window_object = (wingui_window_object*)zend_objects_get_address(getThis() TSRMLS_CC);
+	wingui_window_object *window_object = (wingui_window_object*)zend_object_store_get_object(getThis() TSRMLS_CC);
 	
 	/* parse once because we MUST have a msg to mess with */
 	zend_replace_error_handling(EH_THROW, ce_wingui_argexception, &error_handling TSRMLS_CC);
@@ -286,7 +229,7 @@ PHP_METHOD(WinGuiMessaging, sendNotify)
 	
 	zval ***args = NULL;
 	int argc = 0;
-	wingui_window_object *window_object = (wingui_window_object*)zend_objects_get_address(getThis() TSRMLS_CC);
+	wingui_window_object *window_object = (wingui_window_object*)zend_object_store_get_object(getThis() TSRMLS_CC);
 	
 	/* parse once because we MUST have a msg to mess with */
 	zend_replace_error_handling(EH_THROW, ce_wingui_argexception, &error_handling TSRMLS_CC);
@@ -325,23 +268,22 @@ PHP_METHOD(WinGuiMessaging, sendTimeout)
 
 /* register Messaging methods */
 static zend_function_entry wingui_messaging_functions[] = {
-	PHP_ME(WinGuiMessaging, connect, WinGuiMessaging_connect_args, ZEND_ACC_PUBLIC | ZEND_ACC_ABSTRACT)
-	PHP_ME(WinGuiMessaging, connectFull, WinGuiMessaging_connectFull_args, ZEND_ACC_PUBLIC | ZEND_ACC_ABSTRACT)
-	PHP_ME(WinGuiMessaging, connectSimple, WinGuiMessaging_connectSimple_args, ZEND_ACC_PUBLIC | ZEND_ACC_ABSTRACT)
-	PHP_ME(WinGuiMessaging, disconnect, WinGuiMessaging_disconnect_args, ZEND_ACC_PUBLIC | ZEND_ACC_ABSTRACT)
-	PHP_ME(WinGuiMessaging, get, WinGuiMessaging_get_args, ZEND_ACC_PUBLIC | ZEND_ACC_ABSTRACT)
-	PHP_ME(WinGuiMessaging, peek, WinGuiMessaging_peek_args, ZEND_ACC_PUBLIC | ZEND_ACC_ABSTRACT)
-	PHP_ME(WinGuiMessaging, post, WinGuiMessaging_post_args, ZEND_ACC_PUBLIC | ZEND_ACC_ABSTRACT)
-	PHP_ME(WinGuiMessaging, send, WinGuiMessaging_send_args, ZEND_ACC_PUBLIC | ZEND_ACC_ABSTRACT)
-	PHP_ME(WinGuiMessaging, sendNotify, WinGuiMessaging_sendNotify_args, ZEND_ACC_PUBLIC | ZEND_ACC_ABSTRACT)
-	//PHP_ME(WinGuiMessaging, sendCallback, WinGuiMessaging_sendCallback_args, ZEND_ACC_PUBLIC | ZEND_ACC_ABSTRACT)
-	//PHP_ME(WinGuiMessaging, sendTimeout, WinGuiMessaging_sendTimeout_args, ZEND_ACC_PUBLIC | ZEND_ACC_ABSTRACT)
-	// TODO: sendtimeout, sendcallback, postThread support
+	PHP_ABSTRACT_ME(WinGuiMessaging, connect, WinGuiMessaging_connect_args)
+	PHP_ABSTRACT_ME(WinGuiMessaging, connectFull, WinGuiMessaging_connectFull_args)
+	PHP_ABSTRACT_ME(WinGuiMessaging, connectSimple, WinGuiMessaging_connectSimple_args)
+	PHP_ABSTRACT_ME(WinGuiMessaging, disconnect, WinGuiMessaging_disconnect_args)
+	PHP_ABSTRACT_ME(WinGuiMessaging, get, WinGuiMessaging_get_args)
+	PHP_ABSTRACT_ME(WinGuiMessaging, peek, WinGuiMessaging_peek_args)
+	PHP_ABSTRACT_ME(WinGuiMessaging, post, WinGuiMessaging_post_args)
+	PHP_ABSTRACT_ME(WinGuiMessaging, send, WinGuiMessaging_send_args)
+	PHP_ABSTRACT_ME(WinGuiMessaging, sendNotify, WinGuiMessaging_sendNotify_args)
+	PHP_ABSTRACT_ME(WinGuiMessaging, sendCallback, WinGuiMessaging_sendCallback_args)
+	PHP_ABSTRACT_ME(WinGuiMessaging, sendTimeout, WinGuiMessaging_sendTimeout_args)
 	{NULL, NULL, NULL}
 };
 
 /* ----------------------------------------------------------------
-  Win\Gui\Window C API                                                      
+  Win\Gui\Window C API                                           
 ------------------------------------------------------------------*/
 /* Helper function for connect methods */
 int wingui_messaging_connect_helper(HashTable* callback_table, int message_code, zval*** args, int argc, zend_fcall_info finfo, zend_fcall_info_cache fcache, int send_args, int send_return TSRMLS_DC)
@@ -429,7 +371,7 @@ void wingui_messaging_destructor_helper(HashTable *registered_callbacks TSRMLS_D
 /* }}} */
 
 /* ----------------------------------------------------------------
-  Win\Gui\Message LifeCycle Functions                                                    
+  Win\Gui\Message LifeCycle Functions
 ------------------------------------------------------------------*/
 PHP_MINIT_FUNCTION(wingui_messaging)
 {
