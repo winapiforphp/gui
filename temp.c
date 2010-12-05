@@ -1,32 +1,8 @@
-
-ZEND_BEGIN_ARG_INFO_EX(WinGuiWindow_allowSetForeground_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 1)
-	ZEND_ARG_INFO(0, process_id)
-	ZEND_ARG_INFO(0, allow_any)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO_EX(WinGuiWindow_animateShow_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 0)
-	ZEND_ARG_INFO(0, time)
-	ZEND_ARG_INFO(0, flags)
-	ZEND_ARG_INFO(0, activate)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO_EX(WinGuiWindow_animateHide_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 0)
-	ZEND_ARG_INFO(0, time)
-	ZEND_ARG_INFO(0, flags)
-ZEND_END_ARG_INFO()
-
 ZEND_BEGIN_ARG_INFO_EX(WinGuiWindow_arrangeMinimized_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 0)
 	ZEND_ARG_INFO(0, parent)
 ZEND_END_ARG_INFO()
 
-ZEND_BEGIN_ARG_INFO_EX(WinGuiWindow_popupPosition_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 4)
-	ZEND_ARG_INFO(0, x)
-	ZEND_ARG_INFO(0, y)
-	ZEND_ARG_INFO(0, width)
-	ZEND_ARG_INFO(0, height)
-	ZEND_ARG_INFO(0, flags)
-	ZEND_ARG_INFO(0, exclude)
-ZEND_END_ARG_INFO()
+
 
 ZEND_BEGIN_ARG_INFO_EX(WinGuiWindow_cascade_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 0)
 	ZEND_ARG_INFO(0, parent)
@@ -47,12 +23,7 @@ ZEND_END_ARG_INFO()
 
 
 
-ZEND_BEGIN_ARG_INFO_EX(WinGuiWindow_tile_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 0)
-	ZEND_ARG_INFO(0, parent)
-	ZEND_ARG_INFO(0, flags)
-	ZEND_ARG_INFO(0, rect)
-	ZEND_ARG_INFO(0, kids)
-ZEND_END_ARG_INFO()
+
 
 
 
@@ -80,15 +51,9 @@ ZEND_BEGIN_ARG_INFO_EX(WinGuiWindow_showMinimized_args, ZEND_SEND_BY_VAL, ZEND_R
 	ZEND_ARG_INFO(0, noactivate)
 ZEND_END_ARG_INFO()
 
-ZEND_BEGIN_ARG_INFO(WinGuiWindow_getFromPhysicalPoint_args, ZEND_SEND_BY_VAL)
-	ZEND_ARG_INFO(0, x)
-	ZEND_ARG_INFO(0, y)
-ZEND_END_ARG_INFO()
 
-ZEND_BEGIN_ARG_INFO(WinGuiWindow_getFromPoint_args, ZEND_SEND_BY_VAL)
-	ZEND_ARG_INFO(0, x)
-	ZEND_ARG_INFO(0, y)
-ZEND_END_ARG_INFO()
+
+
 
 ZEND_BEGIN_ARG_INFO(WinGuiWindow_attachMenu_args, ZEND_SEND_BY_VAL)
 	ZEND_ARG_OBJ_INFO(0, menu, Win\\Gui\\Menu, 0)
@@ -212,70 +177,6 @@ PHP_METHOD(WinGuiWindow, __construct)
 }
 /* }}} */
 
-/* {{{ proto bool Win\Gui\Window::allowSetForeground(integer process_id[, boolean allow_any])
-       Allow another process to set the foreground window for the application - if allow_any is true,
-	   then any window will be allowed to set the foreground window */
-PHP_METHOD(WinGuiWindow, allowSetForeground)
-{
-	zend_error_handling error_handling;
-	zend_bool allow_any = 0;
-	long process_id = 0;
-	
-	zend_replace_error_handling(EH_THROW, ce_wingui_exception, &error_handling TSRMLS_CC);
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l!|b", &process_id, &allow_any) == FAILURE) {
-		return;
-	}
-	zend_restore_error_handling(&error_handling TSRMLS_CC);
-
-	if (allow_any) {
-		process_id = ASFW_ANY;
-	}
-
-	RETURN_BOOL(AllowSetForegroundWindow(process_id));
-}
-/* }}} */
-
-/* {{{ proto bool Win\Gui\Window->animateShow([int time, int flags, bool activate])
-       Identical to Win\Gui\Window->show except it animates the display of the window */
-PHP_METHOD(WinGuiWindow, animateShow)
-{
-	zend_error_handling error_handling;
-	long time = 200, flags = 0;
-	zend_bool activate = TRUE;
-	wingui_window_object *window_object = (wingui_window_object*)wingui_window_object_get(getThis() TSRMLS_CC);
-
-	zend_replace_error_handling(EH_THROW, ce_wingui_exception, &error_handling TSRMLS_CC);
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|llb", &time, &flags, &activate) == FAILURE) {
-		return;
-	}
-	zend_restore_error_handling(&error_handling TSRMLS_CC);
-
-	if(activate == TRUE) {
-		flags |= AW_ACTIVATE;
-	}
-
-	RETURN_BOOL(AnimateWindow(window_object->window_handle, time, flags));
-}
-/* }}} */
-
-/* {{{ proto bool Win\Gui\Window->animateHide([int time, int flags])
-       Identical to  Win\Gui\Window->hide except it animates the hiding of the window */
-PHP_METHOD(WinGuiWindow, animateHide)
-{
-	zend_error_handling error_handling;
-	long time = 200, flags = 0;
-	wingui_window_object *window_object = (wingui_window_object*)wingui_window_object_get(getThis() TSRMLS_CC);
-
-	zend_replace_error_handling(EH_THROW, ce_wingui_exception, &error_handling TSRMLS_CC);
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|ll", &time, &flags) == FAILURE) {
-		return;
-	}
-	zend_restore_error_handling(&error_handling TSRMLS_CC);
-
-	RETURN_BOOL(AnimateWindow(window_object->window_handle, time, flags | AW_HIDE));
-}
-/* }}} */
-
 /* {{{ proto int Win\Gui\Window::arrangeMinimized([Win\Gui\Window parent])
        Arranges the minimized child windows of the window given, or of the desktop if no window is passed */
 PHP_METHOD(WinGuiWindow, arrangeMinimized)
@@ -300,116 +201,6 @@ PHP_METHOD(WinGuiWindow, arrangeMinimized)
 
 	/* make the call */
 	RETURN_LONG(ArrangeIconicWindows(parent));
-}
-/* }}} */
-
-/* {{{ proto void Win\Gui\Window->bringToTop()
-       brings a window to the top of the Z-index and activates it */
-PHP_METHOD(WinGuiWindow, bringToTop)
-{
-	zend_error_handling error_handling;
-	wingui_window_object *window_object = (wingui_window_object*)wingui_window_object_get(getThis() TSRMLS_CC);
-
-	zend_replace_error_handling(EH_THROW, ce_wingui_exception, &error_handling TSRMLS_CC);
-	if (zend_parse_parameters_none() == FAILURE) {
-		return;
-	}
-	zend_restore_error_handling(&error_handling TSRMLS_CC);
-
-	RETURN_BOOL(BringWindowToTop(window_object->window_handle));
-}
-/* }}} */
-
-/* {{{ proto array Win\Gui\Window::popupPosition(int x, int y, int width, int height, int flags[, array exclude])
-       Calculates an appropriate pop-up window position using the specified anchor point,
-	   pop-up window size, flags, and the optional exclude rectangle. When the specified
-	   pop-up window size is smaller than the desktop window size, this will ensure that
-	   the pop-up window is fully visible on the desktop window, regardless of the specified anchor point */
-PHP_METHOD(WinGuiWindow, popupPosition)
-{
-	zend_error_handling error_handling;
-	HMODULE module;
-	long x = 0, y = 0, width = 0, height = 0, flags = 0;
-	zval *exclude_array = NULL, **value;
-	POINT point;
-	SIZE size;
-	RECT *exclude_rect, new_position;
-
-	typedef BOOL (WINAPI *CalculatePopupWindowPositionFunc)(const POINT *anchorPoint, const SIZE *windowSize,
-    UINT flags, RECT *excludeRect, RECT *popupWindowPosition);
-
-	CalculatePopupWindowPositionFunc CalculatePopupWindowPositionFuncHandle;
-
-	/* Short Circuit if we're NOT on windows 7 */
-	if(!wingui_is_win7(TSRMLS_C)) {
-		zend_throw_exception(ce_wingui_versionexception, "Win\\Gui\\Window::popupPosition() does not work on Windows versions before Windows 7", 0 TSRMLS_CC);
-		return;
-	}
-
-	zend_replace_error_handling(EH_THROW, ce_wingui_exception, &error_handling TSRMLS_CC);
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "llll|la", &x, &y, &width, &height, &flags, &exclude_array) == FAILURE) {
-		return;
-	}
-	zend_restore_error_handling(&error_handling TSRMLS_CC);
-
-	module = LoadLibrary("user32.dll");
-
-	if (module) {
-		CalculatePopupWindowPositionFuncHandle = (CalculatePopupWindowPositionFunc)GetProcAddress(module, "CalculatePopupWindowPosition");
-		if (CalculatePopupWindowPositionFuncHandle == NULL) {
-			wingui_create_error(GetLastError(), ce_wingui_exception TSRMLS_CC);
-			return;
-		}
-	} else {
-		wingui_create_error(GetLastError(), ce_wingui_exception TSRMLS_CC);
-		return;
-	}
-
-	point.x = x;
-	point.y = y;
-	size.cx = width;
-	size.cy = height;
-
-	/* exclude RECT is NULL if nothing is passed */
-	if(exclude_array) {
-		exclude_rect = ecalloc(1, sizeof(RECT));
-		exclude_rect->bottom = 0;
-		exclude_rect->top = 0;
-		exclude_rect->left = 0;
-		exclude_rect->right = 0;
-		if (zend_hash_find(Z_ARRVAL_P(exclude_array), "left", sizeof("left"), (void **) &value) == SUCCESS) {
-			*value = wingui_juggle_type(*value, IS_LONG TSRMLS_CC);
-			exclude_rect->left = Z_LVAL_PP(value);
-		}
-		if (zend_hash_find(Z_ARRVAL_P(exclude_array), "right", sizeof("right"), (void **) &value) == SUCCESS) {
-			*value = wingui_juggle_type(*value, IS_LONG TSRMLS_CC);
-			exclude_rect->right = Z_LVAL_PP(value);
-		}
-		if (zend_hash_find(Z_ARRVAL_P(exclude_array), "top", sizeof("top"), (void **) &value) == SUCCESS) {
-			*value = wingui_juggle_type(*value, IS_LONG TSRMLS_CC);
-			exclude_rect->top = Z_LVAL_PP(value);
-		}
-		if (zend_hash_find(Z_ARRVAL_P(exclude_array), "bottom", sizeof("bottom"), (void **) &value) == SUCCESS) {
-			*value = wingui_juggle_type(*value, IS_LONG TSRMLS_CC);
-			exclude_rect->bottom = Z_LVAL_PP(value);
-		}
-	} else {
-		exclude_rect = (RECT *) NULL;
-	}
-
-	CalculatePopupWindowPositionFuncHandle(&point, &size, flags, exclude_rect, &new_position);
-
-	if (exclude_array) {
-		efree(exclude_rect);
-	}
-
-	array_init(return_value);
-	add_assoc_long(return_value, "left", new_position.left);
-	add_assoc_long(return_value, "right", new_position.right);
-	add_assoc_long(return_value, "bottom", new_position.bottom);
-	add_assoc_long(return_value, "top", new_position.top);
-
-	FreeLibrary(module);
 }
 /* }}} */
 
@@ -670,102 +461,7 @@ PHP_METHOD(WinGuiWindow, hideOwnedPopups)
 }
 /* }}} */
 
-/* {{{ proto int Win\Gui\Container::tile([Win\Gui\Container parent, int flags, array rect, array kids])
-       Tiles the specified children of the specified parent */
-PHP_METHOD(WinGuiWindow, tile)
-{
-	zend_error_handling error_handling;
-	zval *parent_zval = NULL, *rect_zval = NULL, *kids_zval = NULL, **ppzval;
-	zval **value;
-    long tile_flags = 0;
-	RECT *rect;
-	UINT num_kids = 0;
-	HWND parent, *kids;
-	WORD total;
-	HashTable *kids_hash = NULL;
 
-	zend_replace_error_handling(EH_THROW, ce_wingui_exception, &error_handling TSRMLS_CC);
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|O!la!a", &parent_zval, ce_wingui_window, &tile_flags, &rect_zval, &kids_zval) == FAILURE) {
-		return;
-	}
-	zend_restore_error_handling(&error_handling TSRMLS_CC);
-
-	/* NULL means desktop */
-	if(parent_zval) {
-		wingui_window_object *window_object = (wingui_window_object*)wingui_window_object_get(parent_zval TSRMLS_CC);
-		parent = window_object->window_handle;
-	} else {
-		parent = NULL;
-	}
-
-	/* RECT is NULL if nothing is passed */
-	if(rect_zval) {
-		rect = ecalloc(1, sizeof(RECT));
-		rect->bottom = 0;
-		rect->top = 0;
-		rect->left = 0;
-		rect->right = 0;
-		if (zend_hash_find(Z_ARRVAL_P(rect_zval), "left", sizeof("left"), (void **) &value) == SUCCESS) {
-			*value = wingui_juggle_type(*value, IS_LONG TSRMLS_CC);
-			rect->left = Z_LVAL_PP(value);
-		}
-		if (zend_hash_find(Z_ARRVAL_P(rect_zval), "right", sizeof("right"), (void **) &value) == SUCCESS) {
-			*value = wingui_juggle_type(*value, IS_LONG TSRMLS_CC);
-			rect->right = Z_LVAL_PP(value);
-		}
-		if (zend_hash_find(Z_ARRVAL_P(rect_zval), "top", sizeof("top"), (void **) &value) == SUCCESS) {
-			*value = wingui_juggle_type(*value, IS_LONG TSRMLS_CC);
-			rect->top = Z_LVAL_PP(value);
-		}
-		if (zend_hash_find(Z_ARRVAL_P(rect_zval), "bottom", sizeof("bottom"), (void **) &value) == SUCCESS) {
-			*value = wingui_juggle_type(*value, IS_LONG TSRMLS_CC);
-			rect->bottom = Z_LVAL_PP(value);
-		}
-	} else {
-		rect = (RECT *) NULL;
-	}
-
-	/* walk the kids array and look for legal containers */
-	if(kids_zval) {
-		/* Grab the zend hash */
-		kids_hash = Z_ARRVAL_P(kids_zval);
-		/* emalloc our space as number of elements in the hash - that MIGHT be too big if we hit bad values */
-		kids = emalloc(zend_hash_num_elements(kids_hash));
-
-		/* iterate the array, each value inside MUST be an instance of Win\Gui\Container */
-		for(zend_hash_internal_pointer_reset(kids_hash); zend_hash_has_more_elements(kids_hash) == SUCCESS; zend_hash_move_forward(kids_hash)) { 
-			if (zend_hash_get_current_data(kids_hash, (void **)&ppzval) == FAILURE) {
-				continue; 
-			}
-
-			/* Check for instanceof */
-			if (Z_TYPE_PP(ppzval) == IS_OBJECT && instanceof_function(Z_OBJCE_PP(ppzval), ce_wingui_window TSRMLS_CC)) {
-				/* we have success, grab the internal window object and stick it in the array */
-				wingui_window_object *window_object = (wingui_window_object*)wingui_window_object_get(parent_zval TSRMLS_CC);
-				kids[++num_kids] = window_object->window_handle;
-			}
-		}
-
-	} else {
-		kids = NULL;
-	}
-
-	/* make the call */
-	total = TileWindows(parent, tile_flags, rect, num_kids, kids);
-	
-	if (rect_zval) {
-		efree(rect);
-	}
-	if (kids_zval) {
-		efree(kids);
-	}
-	if (total < 1) {
-		wingui_create_error(GetLastError(), ce_wingui_exception TSRMLS_CC);
-	} else {
-		RETURN_LONG(total);
-	}
-}
-/* }}} */
 
 /* {{{ proto bool Win\Gui\Window->setText()
        sets the caption on the window */
@@ -816,286 +512,13 @@ PHP_METHOD(WinGuiWindow, getText)
 }
 /* }}} */
 
-/* {{{ proto bool Win\Gui\Window->minimize()
-       minimize a window
-	   returns true if the window was previously visible
-	   returns false if the window was previously hidden */
-PHP_METHOD(WinGuiWindow, minimize)
-{
-	zend_error_handling error_handling;
-	wingui_window_object *window_object = (wingui_window_object*)wingui_window_object_get(getThis() TSRMLS_CC);
 
-	zend_replace_error_handling(EH_THROW, ce_wingui_exception, &error_handling TSRMLS_CC);
-	if (zend_parse_parameters_none() == FAILURE) {
-		return;
-	}
-	zend_restore_error_handling(&error_handling TSRMLS_CC);
 
-	/* Identical to CloseWindow(window_object->window_handle); */
-	RETURN_BOOL(ShowWindow(window_object->window_handle, SW_MINIMIZE));
-}
-/* }}} */
 
-/* {{{ proto bool Win\Gui\Window->maximize([bool noactivate])
-       Maximizes the specified window
-	   if noactivate is true, then the window is not activated
-	   returns true if the window was previously visible
-	   returns false if the window was previously hidden */
-PHP_METHOD(WinGuiWindow, maximize)
-{
-	zend_error_handling error_handling;
-	zend_bool noactivate = FALSE;
-	wingui_window_object *window_object = (wingui_window_object*)wingui_window_object_get(getThis() TSRMLS_CC);
 
-	zend_replace_error_handling(EH_THROW, ce_wingui_exception, &error_handling TSRMLS_CC);
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|b", &noactivate) == FAILURE) {
-		return;
-	}
-	zend_restore_error_handling(&error_handling TSRMLS_CC);
 
-	if (noactivate == TRUE) {
-		RETURN_BOOL(ShowWindow(window_object->window_handle, SW_MAXIMIZE));
-	} else {
-		RETURN_BOOL(ShowWindow(window_object->window_handle, SW_SHOWMAXIMIZED));
-	}
-}
-/* }}} */
-/* {{{ proto bool Win\Gui\Container->hide()
-       Makes a container invisible
-	   returns true if the container was previously visible
-	   returns false if the container was previously hidden */
-PHP_METHOD(WinGuiWindow, hide)
-{
-	zend_error_handling error_handling;
-	wingui_window_object *window_object = (wingui_window_object*)wingui_window_object_get(getThis() TSRMLS_CC);
 
-	zend_replace_error_handling(EH_THROW, ce_wingui_exception, &error_handling TSRMLS_CC);
-	if (zend_parse_parameters_none() == FAILURE) {
-		return;
-	}
-	zend_restore_error_handling(&error_handling TSRMLS_CC);
 
-	RETURN_BOOL(ShowWindow(window_object->window_handle, SW_HIDE));
-}
-/* }}} */
-
-/* {{{ proto bool Win\Gui\Window->restore([bool noactivate])
-       restores a window to its pre-minimize/maximized size and position
-	   if noactivate is true, then the window is not activated
-	   returns true if the window was previously visible
-	   returns false if the window was previously hidden */
-PHP_METHOD(WinGuiWindow, restore)
-{
-	zend_error_handling error_handling;
-	zend_bool noactivate = FALSE;
-	wingui_window_object *window_object = (wingui_window_object*)wingui_window_object_get(getThis() TSRMLS_CC);
-
-	zend_replace_error_handling(EH_THROW, ce_wingui_exception, &error_handling TSRMLS_CC);
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|b", &noactivate) == FAILURE) {
-		return;
-	}
-	zend_restore_error_handling(&error_handling TSRMLS_CC);
-
-	if (noactivate == TRUE) {
-		RETURN_BOOL(ShowWindow(window_object->window_handle, SW_SHOWNOACTIVATE));
-	} else {
-		RETURN_BOOL(ShowWindow(window_object->window_handle, SW_RESTORE));
-	}
-}
-/* }}} */
-
-/* {{{ proto bool Win\Gui\Window->show([bool noactivate])
-       displays a window in its current size and position.
-	   if noactivate is true, then the container is not activated
-	   returns true if the container was previously visible
-	   returns false if the container was previously hidden */
-PHP_METHOD(WinGuiWindow, show)
-{
-	zend_error_handling error_handling;
-	zend_bool noactivate = FALSE;
-	wingui_window_object *window_object = (wingui_window_object*)wingui_window_object_get(getThis() TSRMLS_CC);
-
-	zend_replace_error_handling(EH_THROW, ce_wingui_exception, &error_handling TSRMLS_CC);
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|b", &noactivate) == FAILURE) {
-		return;
-	}
-	zend_restore_error_handling(&error_handling TSRMLS_CC);
-
-	if (noactivate == TRUE) {
-		RETURN_BOOL(ShowWindow(window_object->window_handle, SW_SHOWNA));
-	} else {
-		RETURN_BOOL(ShowWindow(window_object->window_handle, SW_SHOW));
-	}
-}
-/* }}} */
-
-/* {{{ proto bool Win\Gui\Window->showMinimized([bool noactivate])
-       shows and minimizes the specified window
-	   if noactivate is true, then the window is not activated
-	   returns true if the window was previously visible
-	   returns false if the window was previously hidden */
-PHP_METHOD(WinGuiWindow, showMinimized)
-{
-	zend_error_handling error_handling;
-	zend_bool noactivate = FALSE;
-	wingui_window_object *window_object = (wingui_window_object*)wingui_window_object_get(getThis() TSRMLS_CC);
-
-	zend_replace_error_handling(EH_THROW, ce_wingui_exception, &error_handling TSRMLS_CC);
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|b", &noactivate) == FAILURE) {
-		return;
-	}
-	zend_restore_error_handling(&error_handling TSRMLS_CC);
-
-	if (noactivate == TRUE) {
-		RETURN_BOOL(ShowWindow(window_object->window_handle, SW_SHOWMINNOACTIVE));
-	} else {
-		RETURN_BOOL(ShowWindow(window_object->window_handle, SW_SHOWMINIMIZED));
-	}
-}
-/* }}} */
-
-/* {{{ proto bool Win\Gui\Container::soundSentry(void)
-       triggers a visual signal to indicate that a sound is playing */
-PHP_METHOD(WinGuiWindow, soundSentry)
-{
-	zend_error_handling error_handling;
-	HMODULE module;
-
-	typedef BOOL (WINAPI *SoundSentryFunc)(VOID);
-	SoundSentryFunc SoundSentryFuncHandle;
-
-	zend_replace_error_handling(EH_THROW, ce_wingui_exception, &error_handling TSRMLS_CC);
-	if (zend_parse_parameters_none() == FAILURE) {
-		return;
-	}
-	zend_restore_error_handling(&error_handling TSRMLS_CC);
-
-	/* Short Circuit if we're NOT on vista */
-	if(!wingui_is_vista(TSRMLS_C)) {
-		zend_throw_exception(ce_wingui_versionexception, "Win\\Gui\\Container::soundSentry() does not work on Windows versions before Vista", 0 TSRMLS_CC);
-		return;
-	}
-	
-	module = LoadLibrary("user32.dll");
-
-	if (module) {
-		SoundSentryFuncHandle = (SoundSentryFunc)GetProcAddress(module, "SoundSentry");
-		if (SoundSentryFuncHandle == NULL) {
-			wingui_create_error(GetLastError(), ce_wingui_exception TSRMLS_CC);
-			return;
-		}
-	} else {
-		wingui_create_error(GetLastError(), ce_wingui_exception TSRMLS_CC);
-		return;
-	}
-
-	RETVAL_BOOL(SoundSentryFuncHandle());
-	FreeLibrary(module);
-}
-/* }}} */
-
-/* {{{ proto Win\Gui\Window object Win\Gui\Window::getFromPhysicalPoint(x, y)
-       Returns a value from a specific physical point, will not return disabled or hidden items
-	   - will NOT currently work on non-wingui generated windows */
-PHP_METHOD(WinGuiWindow, getFromPhysicalPoint)
-{
-	zend_error_handling error_handling;
-	POINT point;
-	long x, y;
-	HWND handle;
-	HMODULE module;
-	wingui_window_object *window_object;
-
-	typedef HWND (WINAPI *WindowFromPhysicalPointFunc)(POINT);
-	WindowFromPhysicalPointFunc WindowFromPhysicalPointFuncHandle;
-
-	/* Short Circuit if we're NOT on vista */
-	if(!wingui_is_vista(TSRMLS_C)) {
-		zend_throw_exception(ce_wingui_versionexception, "Win\\Gui\\Window::getFromPhysicalPoint() does not work on Windows versions before Vista", 0 TSRMLS_CC);
-		return;
-	}
-
-	zend_replace_error_handling(EH_THROW, ce_wingui_exception, &error_handling TSRMLS_CC);
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ll", &x, &y) == FAILURE) {
-		return;
-	}
-	zend_restore_error_handling(&error_handling TSRMLS_CC);
-	point.x = x;
-	point.y = y;
-	
-	module = LoadLibrary("user32.dll");
-
-	if (module) {
-		WindowFromPhysicalPointFuncHandle = (WindowFromPhysicalPointFunc)GetProcAddress(module, "WindowFromPhysicalPoint");
-		if (WindowFromPhysicalPointFuncHandle == NULL) {
-			wingui_create_error(GetLastError(), ce_wingui_exception TSRMLS_CC);
-			return;
-		}
-	} else {
-		wingui_create_error(GetLastError(), ce_wingui_exception TSRMLS_CC);
-		return;
-	}
-
-	handle = WindowFromPhysicalPointFuncHandle(point);
-
-	FreeLibrary(module);
-
-	if(handle == NULL) {
-		return;
-	}
-
-	window_object = (wingui_window_object *)GetWindowLongPtr(handle, GWLP_USERDATA);
-	if (window_object == NULL || window_object->object == NULL) {
-		/* TODO some day: get the window class get the appropriate CE besed on the class returned */
-		zend_throw_exception(ce_wingui_exception, "Win\\Gui\\Window::getFromPhysicalPoint() could not retrieve the requested window - it may have not been created with wingui", 0 TSRMLS_CC);
-		return;
-	} else {
-		zval_dtor(return_value);
-		*return_value = *window_object->object;
-		zval_copy_ctor(return_value);
-		Z_SET_REFCOUNT_P(return_value, 1);
-	}
-}
-/* }}} */
-
-/* {{{ proto Win\Gui\Window object Win\Gui\Window::getFromPoint(x, y)
-       Returns a value from a specific physical point, will not return disabled or hidden items
-	   - will NOT currently work on non-wingui generated windows */
-PHP_METHOD(WinGuiWindow, getFromPoint)
-{
-	zend_error_handling error_handling;
-	POINT point;
-	long x, y;
-	HWND handle;
-	wingui_window_object *window_object;
-
-	zend_replace_error_handling(EH_THROW, ce_wingui_exception, &error_handling TSRMLS_CC);
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ll", &x, &y) == FAILURE) {
-		return;
-	}
-	zend_restore_error_handling(&error_handling TSRMLS_CC);
-	point.x = x;
-	point.y = y;
-
-	handle = WindowFromPoint(point);
-
-	if(handle == NULL) {
-		return;
-	}
-
-	window_object = (wingui_window_object *)GetWindowLongPtr(handle, GWLP_USERDATA);
-	if (window_object == NULL || window_object->object == NULL) {
-		/* TODO some day: get the window class get the appropriate CE besed on the class returned */
-		zend_throw_exception(ce_wingui_exception, "Win\\Gui\\Window::getFromPoint() could not retrieve the requested window - it may have not been created with wingui", 0 TSRMLS_CC);
-		return;
-	} else {
-		zval_dtor(return_value);
-		*return_value = *window_object->object;
-		zval_copy_ctor(return_value);
-		Z_SET_REFCOUNT_P(return_value, 1);
-	}
-}
-/* }}} */
 
 /* ----------------------------------------------------------------
   Win\Gui\Window Menu Related API                                               
@@ -1198,7 +621,7 @@ static zend_function_entry wingui_window_functions[] = {
 	PHP_ME(WinGuiWindow, restore, WinGuiWindow_restore_args, ZEND_ACC_PUBLIC)
 	PHP_ME(WinGuiWindow, show, WinGuiWindow_show_args, ZEND_ACC_PUBLIC)
 	PHP_ME(WinGuiWindow, showMinimized, WinGuiWindow_showMinimized_args, ZEND_ACC_PUBLIC)
-	PHP_ME(WinGuiWindow, soundSentry, NULL, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+	
 	// update layered window
 	// TILE
 	PHP_ME(WinGuiWindow, getFromPhysicalPoint, WinGuiWindow_getFromPhysicalPoint_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
