@@ -630,6 +630,169 @@ int wingui_window_object_get_basics(HashTable *options, zend_bool *use_unicode, 
 			return FAILURE;
 		}
 	}
+	return SUCCESS;
+}
+
+int wingui_window_object_get_styles(HashTable *options, long *style, long *extrastyle TSRMLS_DC) {
+		zval **value;
+
+	/*
+	if (zend_hash_find(Z_ARRVAL_P(options), "align", sizeof("align"), (void **) &value) == SUCCESS) {
+		*value = winapi_juggle_type(*value, IS_BOOL TSRMLS_CC);
+		if (Z_LVAL_PP(value)) {
+			*extrastyle |= WS_EX_RIGHT;
+		} else {
+			*extrastyle |= WS_EX_LEFT;
+		}
+	}
+	if (zend_hash_find(Z_ARRVAL_P(options), "textdir", sizeof("textdir"), (void **) &value) == SUCCESS) {
+		*value = winapi_juggle_type(*value, IS_BOOL TSRMLS_CC);
+		if (Z_LVAL_PP(value)) {
+			*extrastyle |= WS_EX_RTLREADING;
+		} else {
+			*extrastyle |= WS_EX_LTRREADING;
+		}
+	}
+	if (zend_hash_find(Z_ARRVAL_P(options), "scrollbar", sizeof("scrollbar"), (void **) &value) == SUCCESS) {
+		*value = winapi_juggle_type(*value, IS_BOOL TSRMLS_CC);
+		if (Z_LVAL_PP(value)) {
+			*extrastyle |= WS_EX_LEFTSCROLLBAR;
+		} else {
+			*extrastyle |= WS_EX_RIGHTSCROLLBAR;
+		}
+	}
+	if (zend_hash_find(Z_ARRVAL_P(options), "maximizebox", sizeof("maximizebox"), (void **) &value) == SUCCESS){
+		*value = winapi_juggle_type(*value, IS_BOOL TSRMLS_CC);
+		if (Z_LVAL_PP(value)) {
+			*style |= WS_MAXIMIZEBOX;
+		}
+	}
+	if (zend_hash_find(Z_ARRVAL_P(options), "minimizebox", sizeof("minimizebox"), (void **) &value) == SUCCESS) {
+		*value = winapi_juggle_type(*value, IS_BOOL TSRMLS_CC);
+		if (Z_LVAL_PP(value)) {
+			*style |= WS_MINIMIZEBOX;
+		}
+	}
+	if (zend_hash_find(Z_ARRVAL_P(options), "helpbox", sizeof("helpbox"), (void **) &value) == SUCCESS) {
+		*value = winapi_juggle_type(*value, IS_BOOL TSRMLS_CC);
+		if (Z_LVAL_PP(value)) {
+			*extrastyle |= WS_EX_CONTEXTHELP;
+		}
+	}
+	if (zend_hash_find(Z_ARRVAL_P(options), "composited", sizeof("composited"), (void **) &value) == SUCCESS) {
+		*value = winapi_juggle_type(*value, IS_BOOL TSRMLS_CC);
+		if (Z_LVAL_PP(value)) {
+			*extrastyle |= WS_EX_COMPOSITED;
+		}
+	}
+	if (zend_hash_find(Z_ARRVAL_P(options), "layered", sizeof("layered"), (void **) &value) == SUCCESS) {
+		*value = winapi_juggle_type(*value, IS_BOOL TSRMLS_CC);
+		if (Z_LVAL_PP(value)) {
+			*extrastyle |= WS_EX_LAYERED;
+		}
+	}
+	if (zend_hash_find(Z_ARRVAL_P(options), "transparent", sizeof("transparent"), (void **) &value) == SUCCESS) {
+		*value = winapi_juggle_type(*value, IS_BOOL TSRMLS_CC);
+		if (Z_LVAL_PP(value)) {
+			*extrastyle |= WS_EX_TRANSPARENT;
+		}
+	}
+	if (zend_hash_find(Z_ARRVAL_P(options), "layout", sizeof("layout"), (void **) &value) == SUCCESS) {
+		*value = winapi_juggle_type(*value, IS_BOOL TSRMLS_CC);
+		if (Z_LVAL_PP(value)) {
+			*extrastyle |= WS_EX_LAYOUTRTL;
+		}
+	}
+	if (zend_hash_find(Z_ARRVAL_P(options), "inheritlayout", sizeof("inheritlayout"), (void **) &value) == SUCCESS) {
+		*value = winapi_juggle_type(*value, IS_BOOL TSRMLS_CC);
+		if (!Z_LVAL_PP(value)) {
+			*extrastyle |= WS_EX_NOINHERITLAYOUT;
+		}
+	}
+	if (zend_hash_find(Z_ARRVAL_P(options), "notifyparent", sizeof("notifyparent"), (void **) &value) == SUCCESS) {
+		*value = winapi_juggle_type(*value, IS_BOOL TSRMLS_CC);
+		if (!Z_LVAL_PP(value)) {
+			*extrastyle |= WS_EX_NOPARENTNOTIFY;
+		}
+	}
+	if (zend_hash_find(Z_ARRVAL_P(options), "controlparent", sizeof("controlparent"), (void **) &value) == SUCCESS) {
+		*value = winapi_juggle_type(*value, IS_BOOL TSRMLS_CC);
+		if (Z_LVAL_PP(value)) {
+			*extrastyle |= WS_EX_CONTROLPARENT;
+		}
+	}
+	if (zend_hash_find(Z_ARRVAL_P(options), "forcetaskbar", sizeof("forcetaskbar"), (void **) &value) == SUCCESS) {
+		*value = winapi_juggle_type(*value, IS_BOOL TSRMLS_CC);
+		if (Z_LVAL_PP(value)) {
+			*extrastyle |= WS_EX_APPWINDOW;
+		}
+	}
+	if (zend_hash_find(Z_ARRVAL_P(options), "tabstop", sizeof("tabstop"), (void **) &value) == SUCCESS) {
+		*value = winapi_juggle_type(*value, IS_BOOL TSRMLS_CC);
+		if (Z_LVAL_PP(value)) {
+			*style |= WS_TABSTOP;
+		}
+	}
+	if (zend_hash_find(Z_ARRVAL_P(options), "clipchildren", sizeof("clipchildren"), (void **) &value) == SUCCESS) {
+		*value = winapi_juggle_type(*value, IS_BOOL TSRMLS_CC);
+		if (Z_LVAL_PP(value)) {
+			*style |= WS_CLIPCHILDREN;
+		}
+	}
+	if (zend_hash_find(Z_ARRVAL_P(options), "clipsiblings", sizeof("clipsiblings"), (void **) &value) == SUCCESS) {
+		*value = winapi_juggle_type(*value, IS_BOOL TSRMLS_CC);
+		if (Z_LVAL_PP(value)) {
+			*style |= WS_CLIPSIBLINGS;
+		} else if (!((*style & WS_CHILD) == WS_CHILD)) {
+			zend_throw_exception(wingui_exception_get_ce(TSRMLS_C), "A POPUP or TILED window must have clipsiblings enabled", 0 TSRMLS_CC);
+			return FAILURE;
+		}
+	}
+
+
+	if (zend_hash_find(Z_ARRVAL_P(options), "hscroll", sizeof("hscroll"), (void **) &value) == SUCCESS) {
+		*value = winapi_juggle_type(*value, IS_BOOL TSRMLS_CC);
+		if (Z_LVAL_PP(value)) {
+			*style |= WS_HSCROLL;
+		}
+	}
+	if (zend_hash_find(Z_ARRVAL_P(options), "vscroll", sizeof("vscroll"), (void **) &value) == SUCCESS) {
+		*value = winapi_juggle_type(*value, IS_BOOL TSRMLS_CC);
+		if (Z_LVAL_PP(value)) {
+			*style |= WS_VSCROLL;
+		}
+	}
+	if (zend_hash_find(Z_ARRVAL_P(options), "caption", sizeof("caption"), (void **) &value) == SUCCESS) {
+		*value = winapi_juggle_type(*value, IS_BOOL TSRMLS_CC);
+		if (Z_LVAL_PP(value)) {
+			*style |= WS_CAPTION;
+		} else if ((!((*style & WS_POPUP) == WS_POPUP)) && !((*style & WS_CHILD) == WS_CHILD)) {
+			zend_throw_exception(wingui_exception_get_ce(TSRMLS_C), "A TILED window must have a caption", 0 TSRMLS_CC);
+			return FAILURE;
+		}
+	}
+	if (zend_hash_find(Z_ARRVAL_P(options), "sysmenu", sizeof("sysmenu"), (void **) &value) == SUCCESS)
+	{
+		*value = winapi_juggle_type(*value, IS_BOOL TSRMLS_CC);
+		if (Z_LVAL_PP(value))
+		{
+			if (!(*style & WS_CAPTION))
+			{
+				zend_throw_exception(wingui_exception_get_ce(TSRMLS_C), "A window with a sysmenu must also have a caption", 0 TSRMLS_CC);
+				return FAILURE;
+			}
+			*style |= WS_SYSMENU;
+		}
+	}
+	if (zend_hash_find(Z_ARRVAL_P(options), "toolwindow", sizeof("toolwindow"), (void **) &value) == SUCCESS)
+	{
+		*value = winapi_juggle_type(*value, IS_BOOL TSRMLS_CC);
+		if (Z_LVAL_PP(value))
+		{
+			*extrastyle |= WS_EX_TOOLWINDOW;
+		}
+	} */
+	return SUCCESS;
 }
 
 /* Grab current properties in class and use it to populate constructor data 
@@ -874,220 +1037,6 @@ int wingui_window_object_property_values(zval *object, int *x, int *y, int *heig
 			*style |= WS_CAPTION;
 		}
 	} 
-	return SUCCESS;
-}
-/* }}} */
-
-/* Generic option parser for "base" options for windows 
-int wingui_window_object_parse_options(zval *options, int *x, int *y, int *height, int *width, char **text, int *style, int *extrastyle TSRMLS_DC)
-{
-	zval **value;
-
-
-	if (zend_hash_find(Z_ARRVAL_P(options), "text", sizeof("text"), (void **) &value) == SUCCESS) {
-		*value = wingui_juggle_type(*value, IS_STRING TSRMLS_CC);
-		*text = Z_STRVAL_PP(value);
-	}
-	if (zend_hash_find(Z_ARRVAL_P(options), "type", sizeof("type"), (void **) &value) == SUCCESS) {
-		*value = wingui_juggle_type(*value, IS_LONG TSRMLS_CC);
-		
-	}
-
-	/*
-	if (zend_hash_find(Z_ARRVAL_P(options), "align", sizeof("align"), (void **) &value) == SUCCESS) {
-		*value = winapi_juggle_type(*value, IS_BOOL TSRMLS_CC);
-		if (Z_LVAL_PP(value)) {
-			*extrastyle |= WS_EX_RIGHT;
-		} else {
-			*extrastyle |= WS_EX_LEFT;
-		}
-	}
-	if (zend_hash_find(Z_ARRVAL_P(options), "textdir", sizeof("textdir"), (void **) &value) == SUCCESS) {
-		*value = winapi_juggle_type(*value, IS_BOOL TSRMLS_CC);
-		if (Z_LVAL_PP(value)) {
-			*extrastyle |= WS_EX_RTLREADING;
-		} else {
-			*extrastyle |= WS_EX_LTRREADING;
-		}
-	}
-	if (zend_hash_find(Z_ARRVAL_P(options), "scrollbar", sizeof("scrollbar"), (void **) &value) == SUCCESS) {
-		*value = winapi_juggle_type(*value, IS_BOOL TSRMLS_CC);
-		if (Z_LVAL_PP(value)) {
-			*extrastyle |= WS_EX_LEFTSCROLLBAR;
-		} else {
-			*extrastyle |= WS_EX_RIGHTSCROLLBAR;
-		}
-	}
-	if (zend_hash_find(Z_ARRVAL_P(options), "maximizebox", sizeof("maximizebox"), (void **) &value) == SUCCESS){
-		*value = winapi_juggle_type(*value, IS_BOOL TSRMLS_CC);
-		if (Z_LVAL_PP(value)) {
-			*style |= WS_MAXIMIZEBOX;
-		}
-	}
-	if (zend_hash_find(Z_ARRVAL_P(options), "minimizebox", sizeof("minimizebox"), (void **) &value) == SUCCESS) {
-		*value = winapi_juggle_type(*value, IS_BOOL TSRMLS_CC);
-		if (Z_LVAL_PP(value)) {
-			*style |= WS_MINIMIZEBOX;
-		}
-	}
-	if (zend_hash_find(Z_ARRVAL_P(options), "helpbox", sizeof("helpbox"), (void **) &value) == SUCCESS) {
-		*value = winapi_juggle_type(*value, IS_BOOL TSRMLS_CC);
-		if (Z_LVAL_PP(value)) {
-			*extrastyle |= WS_EX_CONTEXTHELP;
-		}
-	}
-	if (zend_hash_find(Z_ARRVAL_P(options), "composited", sizeof("composited"), (void **) &value) == SUCCESS) {
-		*value = winapi_juggle_type(*value, IS_BOOL TSRMLS_CC);
-		if (Z_LVAL_PP(value)) {
-			*extrastyle |= WS_EX_COMPOSITED;
-		}
-	}
-	if (zend_hash_find(Z_ARRVAL_P(options), "layered", sizeof("layered"), (void **) &value) == SUCCESS) {
-		*value = winapi_juggle_type(*value, IS_BOOL TSRMLS_CC);
-		if (Z_LVAL_PP(value)) {
-			*extrastyle |= WS_EX_LAYERED;
-		}
-	}
-	if (zend_hash_find(Z_ARRVAL_P(options), "transparent", sizeof("transparent"), (void **) &value) == SUCCESS) {
-		*value = winapi_juggle_type(*value, IS_BOOL TSRMLS_CC);
-		if (Z_LVAL_PP(value)) {
-			*extrastyle |= WS_EX_TRANSPARENT;
-		}
-	}
-	if (zend_hash_find(Z_ARRVAL_P(options), "layout", sizeof("layout"), (void **) &value) == SUCCESS) {
-		*value = winapi_juggle_type(*value, IS_BOOL TSRMLS_CC);
-		if (Z_LVAL_PP(value)) {
-			*extrastyle |= WS_EX_LAYOUTRTL;
-		}
-	}
-	if (zend_hash_find(Z_ARRVAL_P(options), "inheritlayout", sizeof("inheritlayout"), (void **) &value) == SUCCESS) {
-		*value = winapi_juggle_type(*value, IS_BOOL TSRMLS_CC);
-		if (!Z_LVAL_PP(value)) {
-			*extrastyle |= WS_EX_NOINHERITLAYOUT;
-		}
-	}
-	if (zend_hash_find(Z_ARRVAL_P(options), "notifyparent", sizeof("notifyparent"), (void **) &value) == SUCCESS) {
-		*value = winapi_juggle_type(*value, IS_BOOL TSRMLS_CC);
-		if (!Z_LVAL_PP(value)) {
-			*extrastyle |= WS_EX_NOPARENTNOTIFY;
-		}
-	}
-	if (zend_hash_find(Z_ARRVAL_P(options), "controlparent", sizeof("controlparent"), (void **) &value) == SUCCESS) {
-		*value = winapi_juggle_type(*value, IS_BOOL TSRMLS_CC);
-		if (Z_LVAL_PP(value)) {
-			*extrastyle |= WS_EX_CONTROLPARENT;
-		}
-	}
-	if (zend_hash_find(Z_ARRVAL_P(options), "forcetaskbar", sizeof("forcetaskbar"), (void **) &value) == SUCCESS) {
-		*value = winapi_juggle_type(*value, IS_BOOL TSRMLS_CC);
-		if (Z_LVAL_PP(value)) {
-			*extrastyle |= WS_EX_APPWINDOW;
-		}
-	}
-	if (zend_hash_find(Z_ARRVAL_P(options), "tabstop", sizeof("tabstop"), (void **) &value) == SUCCESS) {
-		*value = winapi_juggle_type(*value, IS_BOOL TSRMLS_CC);
-		if (Z_LVAL_PP(value)) {
-			*style |= WS_TABSTOP;
-		}
-	}
-	if (zend_hash_find(Z_ARRVAL_P(options), "clipchildren", sizeof("clipchildren"), (void **) &value) == SUCCESS) {
-		*value = winapi_juggle_type(*value, IS_BOOL TSRMLS_CC);
-		if (Z_LVAL_PP(value)) {
-			*style |= WS_CLIPCHILDREN;
-		}
-	}
-	if (zend_hash_find(Z_ARRVAL_P(options), "clipsiblings", sizeof("clipsiblings"), (void **) &value) == SUCCESS) {
-		*value = winapi_juggle_type(*value, IS_BOOL TSRMLS_CC);
-		if (Z_LVAL_PP(value)) {
-			*style |= WS_CLIPSIBLINGS;
-		} else if (!((*style & WS_CHILD) == WS_CHILD)) {
-			zend_throw_exception(wingui_exception_get_ce(TSRMLS_C), "A POPUP or TILED window must have clipsiblings enabled", 0 TSRMLS_CC);
-			return FAILURE;
-		}
-	}
-
-
-	if (zend_hash_find(Z_ARRVAL_P(options), "hscroll", sizeof("hscroll"), (void **) &value) == SUCCESS) {
-		*value = winapi_juggle_type(*value, IS_BOOL TSRMLS_CC);
-		if (Z_LVAL_PP(value)) {
-			*style |= WS_HSCROLL;
-		}
-	}
-	if (zend_hash_find(Z_ARRVAL_P(options), "vscroll", sizeof("vscroll"), (void **) &value) == SUCCESS) {
-		*value = winapi_juggle_type(*value, IS_BOOL TSRMLS_CC);
-		if (Z_LVAL_PP(value)) {
-			*style |= WS_VSCROLL;
-		}
-	}
-	if (zend_hash_find(Z_ARRVAL_P(options), "caption", sizeof("caption"), (void **) &value) == SUCCESS) {
-		*value = winapi_juggle_type(*value, IS_BOOL TSRMLS_CC);
-		if (Z_LVAL_PP(value)) {
-			*style |= WS_CAPTION;
-		} else if ((!((*style & WS_POPUP) == WS_POPUP)) && !((*style & WS_CHILD) == WS_CHILD)) {
-			zend_throw_exception(wingui_exception_get_ce(TSRMLS_C), "A TILED window must have a caption", 0 TSRMLS_CC);
-			return FAILURE;
-		}
-	}
-	if (zend_hash_find(Z_ARRVAL_P(options), "sysmenu", sizeof("sysmenu"), (void **) &value) == SUCCESS)
-	{
-		*value = winapi_juggle_type(*value, IS_BOOL TSRMLS_CC);
-		if (Z_LVAL_PP(value))
-		{
-			if (!(*style & WS_CAPTION))
-			{
-				zend_throw_exception(wingui_exception_get_ce(TSRMLS_C), "A window with a sysmenu must also have a caption", 0 TSRMLS_CC);
-				return FAILURE;
-			}
-			*style |= WS_SYSMENU;
-		}
-	}
-	if (zend_hash_find(Z_ARRVAL_P(options), "toolwindow", sizeof("toolwindow"), (void **) &value) == SUCCESS)
-	{
-		*value = winapi_juggle_type(*value, IS_BOOL TSRMLS_CC);
-		if (Z_LVAL_PP(value))
-		{
-			*extrastyle |= WS_EX_TOOLWINDOW;
-		}
-	}
-
-	/* These are special settings that are only available through the constructor, not as properties because
-	  they can be manipulated programatically after creating the window - they affect the "initial state" 
-	if (zend_hash_find(Z_ARRVAL_P(options), "maximize", sizeof("maximize"), (void **) &value) == SUCCESS) {
-		*value = wingui_juggle_type(*value, IS_BOOL TSRMLS_CC);
-		if (Z_LVAL_PP(value)) {
-			*style |= WS_MAXIMIZE;
-		}
-	}
-	if (zend_hash_find(Z_ARRVAL_P(options), "minimize", sizeof("minimize"), (void **) &value) == SUCCESS) {
-		*value = wingui_juggle_type(*value, IS_BOOL TSRMLS_CC);
-		if (Z_LVAL_PP(value)) {
-			*style |= WS_MINIMIZE;
-		}
-	}
-	if (zend_hash_find(Z_ARRVAL_P(options), "visible", sizeof("visible"), (void **) &value) == SUCCESS) {
-		*value = wingui_juggle_type(*value, IS_BOOL TSRMLS_CC);
-		if (Z_LVAL_PP(value)) {
-			*style |= WS_VISIBLE;
-		}
-	}
-	if (zend_hash_find(Z_ARRVAL_P(options), "disabled", sizeof("disabled"), (void **) &value) == SUCCESS) {
-		*value = wingui_juggle_type(*value, IS_BOOL TSRMLS_CC);
-		if (Z_LVAL_PP(value)) {
-			*style |= WS_DISABLED;
-		}
-	}
-	if (zend_hash_find(Z_ARRVAL_P(options), "deactivated", sizeof("deactivated"), (void **) &value) == SUCCESS) {
-		*value = wingui_juggle_type(*value, IS_BOOL TSRMLS_CC);
-		if (Z_LVAL_PP(value)) {
-			*extrastyle |= WS_EX_NOACTIVATE;
-		}
-	}
-	if (zend_hash_find(Z_ARRVAL_P(options), "topmost", sizeof("topmost"), (void **) &value) == SUCCESS) {
-		*value = wingui_juggle_type(*value, IS_BOOL TSRMLS_CC);
-		if (Z_LVAL_PP(value)) {
-			*extrastyle |= WS_EX_TOPMOST;
-		}
-	}
 	return SUCCESS;
 }
 /* }}} */

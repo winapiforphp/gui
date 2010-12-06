@@ -99,7 +99,8 @@ PHP_METHOD(WinGuiWindow, __construct)
 	char * name = "Title";
 	wchar_t * unicode = L"Title";
 
-	long x = CW_USEDEFAULT, y = CW_USEDEFAULT, width = CW_USEDEFAULT, height = CW_USEDEFAULT;
+	long x = CW_USEDEFAULT, y = CW_USEDEFAULT, width = CW_USEDEFAULT, height = CW_USEDEFAULT,
+		style = 0, extrastyle = 0;
 
 	wingui_window_object *window_object = (wingui_window_object*)zend_object_store_get_object(getThis() TSRMLS_CC);
 
@@ -112,16 +113,51 @@ PHP_METHOD(WinGuiWindow, __construct)
 	zend_restore_error_handling(&error_handling TSRMLS_CC);
 
 	if (options) {
+		zval **value;
+
 		wingui_window_object_get_basics(options, &use_unicode, &name, &unicode,
 			&x, &y, &width, &height TSRMLS_CC);
+
+		/* These are special settings that are only available through the constructor, not as properties because
+		  they can be manipulated programatically after creating the window - they affect the "initial state" */
+		if (zend_hash_find(options, "maximize", sizeof("maximize"), (void **) &value) == SUCCESS) {
+			if (winsystem_juggle_type(*value, IS_BOOL TSRMLS_CC) == SUCCESS && Z_LVAL_PP(value)){
+				style |= WS_MAXIMIZE;
+			}
+		}
+		if (zend_hash_find(options, "minimize", sizeof("minimize"), (void **) &value) == SUCCESS) {
+			if (winsystem_juggle_type(*value, IS_BOOL TSRMLS_CC) == SUCCESS && Z_LVAL_PP(value)){
+				style |= WS_MINIMIZE;
+			}
+		}
+		if (zend_hash_find(options, "visible", sizeof("visible"), (void **) &value) == SUCCESS) {
+			if (winsystem_juggle_type(*value, IS_BOOL TSRMLS_CC) == SUCCESS && Z_LVAL_PP(value)){
+				style |= WS_VISIBLE;
+			}
+		}
+		if (zend_hash_find(options, "disabled", sizeof("disabled"), (void **) &value) == SUCCESS) {
+			if (winsystem_juggle_type(*value, IS_BOOL TSRMLS_CC) == SUCCESS && Z_LVAL_PP(value)){
+				style |= WS_DISABLED;
+			}
+		}
+		if (zend_hash_find(options, "deactivated", sizeof("deactivated"), (void **) &value) == SUCCESS) {
+			if (winsystem_juggle_type(*value, IS_BOOL TSRMLS_CC) == SUCCESS && Z_LVAL_PP(value)){
+				extrastyle |= WS_EX_NOACTIVATE;
+			}
+		}
+		if (zend_hash_find(options, "topmost", sizeof("topmost"), (void **) &value) == SUCCESS) {
+			if (winsystem_juggle_type(*value, IS_BOOL TSRMLS_CC) == SUCCESS && Z_LVAL_PP(value)){
+				extrastyle |= WS_EX_TOPMOST;
+			}
+		}
 	}
 
 	if (use_unicode) {
 		handle = CreateWindowExW(
-			0,
+			extrastyle,
 			L"php_wingui_window_unicode", 
 			unicode,
-			WS_OVERLAPPEDWINDOW,
+			style,
 			x,
 			y,
 			width,
@@ -132,10 +168,10 @@ PHP_METHOD(WinGuiWindow, __construct)
 			(LPVOID) window_object);
 	} else {
 		handle = CreateWindowExA(
-			0,
+			extrastyle,
 			"php_wingui_window", 
 			name,
-			WS_OVERLAPPEDWINDOW,
+			style,
 			x,
 			y,
 			width,
@@ -146,7 +182,7 @@ PHP_METHOD(WinGuiWindow, __construct)
 			(LPVOID) window_object);
 	}
 
-    if (!handle) {
+	if (!handle) {
 		winsystem_create_error(GetLastError(), ce_wingui_exception TSRMLS_CC);
 		return;
 	} else {
