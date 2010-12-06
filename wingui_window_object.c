@@ -586,7 +586,8 @@ LRESULT wingui_window_messages_results(int msg, zval *return_value TSRMLS_DC)
 /* ----------------------------------------------------------------
   parameter parsing helpers for windows
 ------------------------------------------------------------------*/
-int wingui_window_object_get_text(HashTable *options, zend_bool *use_unicode, char ** name, wchar_t ** unicode TSRMLS_DC)
+int wingui_window_object_get_basics(HashTable *options, zend_bool *use_unicode, char ** name, wchar_t ** unicode,
+									long *x, long *y, long *width, long *height TSRMLS_DC)
 {
 	zval **value;
 
@@ -597,9 +598,38 @@ int wingui_window_object_get_text(HashTable *options, zend_bool *use_unicode, ch
 			*unicode = unicode_object->unicode_string;
 		} else if (SUCCESS == winsystem_juggle_type(*value, IS_STRING TSRMLS_CC)) {
 			*name = Z_STRVAL_PP(value);
+		} else {
+			return FAILURE;
 		}
 	}
-	return FAILURE;
+	if (zend_hash_find(options, "x", sizeof("x"), (void **) &value) == SUCCESS) {
+		if (SUCCESS == winsystem_juggle_type(*value, IS_LONG TSRMLS_CC)) {
+			*x = Z_LVAL_PP(value);
+		} else {
+			return FAILURE;
+		}
+	}
+	if (zend_hash_find(options, "y", sizeof("y"), (void **) &value) == SUCCESS) {
+		if (SUCCESS == winsystem_juggle_type(*value, IS_LONG TSRMLS_CC)) {
+			*y = Z_LVAL_PP(value);
+		} else {
+			return FAILURE;
+		}
+	}
+	if (zend_hash_find(options, "width", sizeof("width"), (void **) &value) == SUCCESS) {
+		if (SUCCESS == winsystem_juggle_type(*value, IS_LONG TSRMLS_CC)) {
+			*width = Z_LVAL_PP(value);
+		} else {
+			return FAILURE;
+		}
+	}
+	if (zend_hash_find(options, "height", sizeof("height"), (void **) &value) == SUCCESS) {
+		if (SUCCESS == winsystem_juggle_type(*value, IS_LONG TSRMLS_CC)) {
+			*height = Z_LVAL_PP(value);
+		} else {
+			return FAILURE;
+		}
+	}
 }
 
 /* Grab current properties in class and use it to populate constructor data 
@@ -853,22 +883,7 @@ int wingui_window_object_parse_options(zval *options, int *x, int *y, int *heigh
 {
 	zval **value;
 
-	if (zend_hash_find(Z_ARRVAL_P(options), "x", sizeof("x"), (void **) &value) == SUCCESS) {
-		*value = wingui_juggle_type(*value, IS_LONG TSRMLS_CC);
-		*x = Z_LVAL_PP(value);
-	}
-	if (zend_hash_find(Z_ARRVAL_P(options), "y", sizeof("y"), (void **) &value) == SUCCESS) {
-		*value = wingui_juggle_type(*value, IS_LONG TSRMLS_CC);
-		*y = Z_LVAL_PP(value);
-	}
-	if (zend_hash_find(Z_ARRVAL_P(options), "width", sizeof("width"), (void **) &value) == SUCCESS) {
-		*value = wingui_juggle_type(*value, IS_LONG TSRMLS_CC);
-		*width = Z_LVAL_PP(value);
-	}
-	if (zend_hash_find(Z_ARRVAL_P(options), "height", sizeof("height"), (void **) &value) == SUCCESS) {
-		*value = wingui_juggle_type(*value, IS_LONG TSRMLS_CC);
-		*height = Z_LVAL_PP(value);
-	}
+
 	if (zend_hash_find(Z_ARRVAL_P(options), "text", sizeof("text"), (void **) &value) == SUCCESS) {
 		*value = wingui_juggle_type(*value, IS_STRING TSRMLS_CC);
 		*text = Z_STRVAL_PP(value);

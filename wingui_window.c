@@ -99,6 +99,8 @@ PHP_METHOD(WinGuiWindow, __construct)
 	char * name = "Title";
 	wchar_t * unicode = L"Title";
 
+	long x = CW_USEDEFAULT, y = CW_USEDEFAULT, width = CW_USEDEFAULT, height = CW_USEDEFAULT;
+
 	wingui_window_object *window_object = (wingui_window_object*)zend_object_store_get_object(getThis() TSRMLS_CC);
 
 	window_object->object_zval = getThis();
@@ -110,37 +112,38 @@ PHP_METHOD(WinGuiWindow, __construct)
 	zend_restore_error_handling(&error_handling TSRMLS_CC);
 
 	if (options) {
-		wingui_window_object_get_text(options, &use_unicode, &name, &unicode TSRMLS_CC);
+		wingui_window_object_get_basics(options, &use_unicode, &name, &unicode,
+			&x, &y, &width, &height TSRMLS_CC);
 	}
 
 	if (use_unicode) {
 		handle = CreateWindowExW(
-		0,
-        L"php_wingui_window_unicode", 
-        unicode,
-        WS_OVERLAPPEDWINDOW,
-        CW_USEDEFAULT,
-        CW_USEDEFAULT,
-        CW_USEDEFAULT,
-        CW_USEDEFAULT,
-        NULL,
-        NULL,
-        GetModuleHandle(NULL),
-        (LPVOID) window_object);
+			0,
+			L"php_wingui_window_unicode", 
+			unicode,
+			WS_OVERLAPPEDWINDOW,
+			x,
+			y,
+			width,
+			height,
+			NULL,
+			NULL,
+			GetModuleHandle(NULL),
+			(LPVOID) window_object);
 	} else {
 		handle = CreateWindowExA(
-		0,
-        "php_wingui_window", 
-        name,
-        WS_OVERLAPPEDWINDOW,
-        CW_USEDEFAULT,
-        CW_USEDEFAULT,
-        CW_USEDEFAULT,
-        CW_USEDEFAULT,
-        NULL,
-        NULL,
-        GetModuleHandle(NULL),
-        (LPVOID) window_object);
+			0,
+			"php_wingui_window", 
+			name,
+			WS_OVERLAPPEDWINDOW,
+			x,
+			y,
+			width,
+			height,
+			NULL,
+			NULL,
+			GetModuleHandle(NULL),
+			(LPVOID) window_object);
 	}
 
     if (!handle) {

@@ -214,7 +214,8 @@ zval ***wingui_window_messages_cracker(int msg, WPARAM *wParam, LPARAM *lParam, 
 LRESULT wingui_window_messages_results(int msg, zval *return_value TSRMLS_DC);
 void wingui_window_messages_packer(int msg, WPARAM *wParam, LPARAM *lParam, zval ***extra TSRMLS_DC);
 
-int wingui_window_object_get_text(HashTable *options, zend_bool *use_unicode, char ** name, wchar_t ** unicode TSRMLS_DC);
+int wingui_window_object_get_basics(HashTable *options, zend_bool *use_unicode, char ** name, wchar_t ** unicode,
+									long *x, long *y, long *width, long *height TSRMLS_DC);
 
 static inline zval ***wingui_callback_extra_zvals_ctor(int argc)
 {
