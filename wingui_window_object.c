@@ -18,6 +18,7 @@
 
 
 #include "php_wingui.h"
+#include "php_winsystem_api.h"
 #include "zend_exceptions.h"
 
 /* ----------------------------------------------------------------
@@ -144,7 +145,7 @@ zval* wingui_winproc_callback_dispatch(wingui_window_object *window_object, int 
 
 		MAKE_STD_ZVAL(function);
 		ZVAL_STRING(function, callback_method, 1);
-		
+
 		/* The parameters list is only created/allocated on demand but is used for all callbacks */
 		if (!param_list) {
 			param_list = safe_emalloc(param_list_count, sizeof(zval**), 0);
@@ -187,9 +188,9 @@ zval* wingui_winproc_callback_dispatch(wingui_window_object *window_object, int 
 }
 /* }}} */
 
-/* Helper function that asks "is this a statusbar window?
-   This is a workaround for statusbars not getting a SIZE posted
-   when a parent is resized and is used by the default window procedure */
+/* Helper function that asks "is this a statusbar window?"
+   This is a workaround for statusbars not getting a WM_SIZE posted
+   when a parent is resized and is used by the window procedure */
 static BOOL CALLBACK wingui_check_for_statusbar(HWND hwndChild, LPARAM lParam) 
 { 
 	char buf[20] = {0};
@@ -213,28 +214,43 @@ LRESULT CALLBACK wingui_proc_handler(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 	int extra_count = 0;
 	zend_bool stop_default = FALSE;
 	zval *return_value = NULL;
+	wingui_window_object *window_object = NULL;
 #ifdef ZTS
 	TSRMLS_D;
 #endif;
 
-	// TODO: do not do this if this is WM_CREATE, instead get window_object out of the CREATESTRUCT
-	wingui_window_object *window_object = (wingui_window_object *)GetWindowLongPtr(hwnd, GWLP_USERDATA);
-#ifdef ZTS
-	TSRMLS_C = window_object->TSRMLS_C;
-#endif
-
-	/* This is ugly as sin.  This says take all the child windows, if they are a statusbar send them a WM_SIZE
+	/* This is ugly as sin.  This says take all the child windows,
+	   check if they are a statusbar send them a WM_SIZE if so
 	   Why? because the default proc is too stupid to do this */
 	if(msg == WM_SIZE) {
 		EnumChildWindows(hwnd, wingui_check_for_statusbar, (LPARAM) NULL);
 	}
+
+	/* we have two ways to get a window object, first we check to see if it's stored,
+	   then we try to get it from a CREATESTRUCT, if neither work we bail
+	   by sending back defwindowproc handling of the message */
+	window_object = (wingui_window_object *)GetWindowLongPtr(hwnd, GWLP_USERDATA);
+	if (!window_object) {
+		if (msg == WM_CREATE || msg == WM_NCCREATE) {
+			window_object = (wingui_window_object *)((*(CREATESTRUCT*)(lParam)).lpCreateParams);
+			if (!window_object) {
+				return CallWindowProc(DefWindowProc, hwnd, msg, wParam, lParam);
+			}
+		} else {
+			return CallWindowProc(DefWindowProc, hwnd, msg, wParam, lParam);
+		}
+	}
+
+#ifdef ZTS
+	TSRMLS_C = window_object->TSRMLS_C;
+#endif
 
 	extra = window_object->messages_cracker(msg, &wParam, &lParam, &extra_count TSRMLS_CC);
 
 	if(window_object) {
 		return_value = wingui_winproc_callback_dispatch(window_object, msg, extra, extra_count, &stop_default TSRMLS_CC);
 	}
-	
+
 	if (stop_default == FALSE) {
 		window_object->messages_packer(msg, &wParam, &lParam, extra TSRMLS_CC);
 	}
@@ -252,11 +268,313 @@ LRESULT CALLBACK wingui_proc_handler(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 	} else if (return_value) {
 		CallWindowProc(window_object->window_proc, hwnd, msg, wParam, lParam);
 		return window_object->messages_results(msg, return_value TSRMLS_CC);
+		return CallWindowProc(window_object->window_proc, hwnd, msg, wParam, lParam);
 	} else {
 		return CallWindowProc(window_object->window_proc, hwnd, msg, wParam, lParam);
 	}
 }
 /* }}} */
+
+
+/* ----------------------------------------------------------------
+  wingui_window_object basic window crackers, packers
+  LRESULTs in and LRESULTS out
+------------------------------------------------------------------*/
+/* put zvals into lparams, wparams before calling defaultproc */
+void wingui_window_messages_packer(int msg, WPARAM *wParam, LPARAM *lParam, zval ***extra TSRMLS_DC)
+{
+	zval *value = NULL;
+
+	return;
+
+	switch(msg) {
+		/* All the no params msgs go first */
+		case WM_CANCELMODE:
+		case WM_CHILDACTIVATE:
+		case WM_CLOSE:
+		case WM_DESTROY:
+		case WM_ENTERSIZEMOVE:
+		case WM_EXITSIZEMOVE:
+			break;
+		case WM_ACTIVATEAPP:
+		case WM_ENABLE:
+		case WM_GETICON:
+			if(winsystem_juggle_type(*extra[0], IS_LONG TSRMLS_CC) == SUCCESS) {
+				*wParam = Z_LVAL_P(*extra[0]);
+			}
+			break;
+		case WM_GETMINMAXINFO:
+			/* maxsize */
+			if (zend_hash_index_find(Z_ARRVAL_P(*extra[0]), 0, &value) == SUCCESS) {
+				if(winsystem_juggle_type(value, IS_LONG TSRMLS_CC) == SUCCESS) {
+					((MINMAXINFO*)*lParam)->ptMaxSize.x = Z_LVAL_P(value);
+				}
+			}
+			if (zend_hash_index_find(Z_ARRVAL_P(*extra[0]), 1, &value) == SUCCESS) {
+				if(winsystem_juggle_type(value, IS_LONG TSRMLS_CC) == SUCCESS) {
+					((MINMAXINFO*)*lParam)->ptMaxSize.y = Z_LVAL_P(value);
+				}
+			}
+			
+			/* maxposition */
+			if (zend_hash_index_find(Z_ARRVAL_P(*extra[1]), 0, &value) == SUCCESS) {
+				if(winsystem_juggle_type(value, IS_LONG TSRMLS_CC) == SUCCESS) {
+					((MINMAXINFO*)*lParam)->ptMaxPosition.x = Z_LVAL_P(value);
+				}
+			}
+			if (zend_hash_index_find(Z_ARRVAL_P(*extra[1]), 1, &value) == SUCCESS) {
+				winsystem_juggle_type(value, IS_LONG TSRMLS_CC);
+				((MINMAXINFO*)*lParam)->ptMaxPosition.y = Z_LVAL_P(value);
+			}
+
+			/* mintracksize */
+			if (zend_hash_index_find(Z_ARRVAL_P(*extra[2]), 0, &value) == SUCCESS) {
+				winsystem_juggle_type(value, IS_LONG TSRMLS_CC);
+				((MINMAXINFO*)*lParam)->ptMinTrackSize.x = Z_LVAL_P(value);
+			}
+			if (zend_hash_index_find(Z_ARRVAL_P(*extra[2]), 1, &value) == SUCCESS) {
+				winsystem_juggle_type(value, IS_LONG TSRMLS_CC);
+				((MINMAXINFO*)*lParam)->ptMinTrackSize.y = Z_LVAL_P(value);
+			}	
+
+			/* maxtracksize */
+			if (zend_hash_index_find(Z_ARRVAL_P(*extra[3]), 0, &value) == SUCCESS) {
+				winsystem_juggle_type(value, IS_LONG TSRMLS_CC);
+				((MINMAXINFO*)*lParam)->ptMaxTrackSize.x = Z_LVAL_P(value);
+			}
+			if (zend_hash_index_find(Z_ARRVAL_P(*extra[3]), 1, &value) == SUCCESS) {
+				winsystem_juggle_type(value, IS_LONG TSRMLS_CC);
+				((MINMAXINFO*)*lParam)->ptMaxTrackSize.y = Z_LVAL_P(value);
+			}
+			break;
+		case WM_INPUTLANGCHANGE:
+		case WM_INPUTLANGCHANGEREQUEST:
+			winsystem_juggle_type(*extra[0], IS_LONG TSRMLS_CC);
+			*wParam = Z_LVAL_P(*extra[0]);
+			winsystem_juggle_type(*extra[1], IS_LONG TSRMLS_CC);
+			*lParam = Z_LVAL_P(*extra[1]);
+			break;
+		case WM_MOVE:
+			winsystem_juggle_type(*extra[0], IS_LONG TSRMLS_CC);
+			winsystem_juggle_type(*extra[1], IS_LONG TSRMLS_CC);
+			*lParam = MAKELPARAM(*extra[0], *extra[1]);
+			break;
+		case WM_SIZE:
+			winsystem_juggle_type(*extra[0], IS_LONG TSRMLS_CC);
+			*wParam = Z_LVAL_P(*extra[0]);
+			winsystem_juggle_type(*extra[1], IS_LONG TSRMLS_CC);
+			winsystem_juggle_type(*extra[2], IS_LONG TSRMLS_CC);
+			*lParam = MAKELPARAM(*extra[1], *extra[2]);
+			break;
+		case WM_COMMAND:
+			/* lparam is 0 we have Menu */
+			if (*lParam == 0 && HIWORD(*wParam) == 0) {
+				if(winsystem_juggle_type(*extra[0], IS_LONG TSRMLS_CC) == SUCCESS) {
+					*wParam = MAKEWPARAM(*extra[0], 0);
+				}
+			}
+			break;
+	/* basic window message crackers 
+	/* Send these on to their destination classes 
+	case WM_NOTIFY:
+		switch (((LPNMHDR)lParam)->code)
+		{
+			/* LPNMHDR STRUCT 
+			HWND hwndFrom;
+			UINT_PTR idFrom;
+			UINT code; 
+			/* Statusbar rethrowing 
+			case NM_CLICK:
+			case NM_DBLCLK:
+			case NM_RCLICK:
+			case NM_RDBLCLK:
+			{
+				SendMessage((HWND) ((LPNMHDR)*lParam)->hwndFrom, WINGUI_INTERNAL_MESSAGE, ((LPNMHDR)*lParam)->code, *lParam);
+			}
+		}
+	case WM_COMMAND:
+			/* Button messages are sent by default to the parent, this redirects to the button itself 
+			switch(HIWORD(*wParam)) {
+				case BCN_HOTITEMCHANGE:
+				case BN_CLICKED:
+				case BN_DBLCLK:
+				case BN_DISABLE:
+				case BN_HILITE: // BN_PUSHED
+				case BN_KILLFOCUS:
+				case BN_PAINT:
+				case BN_SETFOCUS:
+				case BN_UNHILITE: // BN_UNPUSHED
+				{
+					SendMessage((HWND) *lParam, HIWORD(*wParam), 0, 0);
+					break;
+				}
+			}
+			
+		}
+		break;*/
+	}
+}
+/* }}} */
+
+/* put lparams and wparams into zvals for windows notifications and messages */
+zval ***wingui_window_messages_cracker(int msg, WPARAM *wParam, LPARAM *lParam, int *extra_count TSRMLS_DC)
+{
+	zval ***extra = NULL;
+
+	switch(msg) {
+		/* All the no params msgs go first */
+		case WM_CANCELMODE:
+		case WM_CHILDACTIVATE:
+		case WM_CLOSE:
+		case WM_DESTROY:
+		case WM_ENTERSIZEMOVE:
+		case WM_EXITSIZEMOVE:
+			break;
+		case WM_ACTIVATEAPP:
+		case WM_ENABLE:
+			*extra_count = 1;
+			extra = wingui_callback_extra_zvals_ctor(*extra_count);
+			ZVAL_BOOL(*extra[0], *wParam); /* activated or enabled */
+			/* Thread ID is ignored for WM_ACTIVATEAPP */
+			break;
+		case WM_GETICON:
+			*extra_count = 1;
+			extra = wingui_callback_extra_zvals_ctor(*extra_count);
+			ZVAL_LONG(*extra[0], *wParam); /* ICON_BIG, ICON_SMALL, ICON_SMALL2 */
+			break;
+		case WM_GETMINMAXINFO:
+			*extra_count = 4;
+			extra = wingui_callback_extra_zvals_ctor(*extra_count);
+			array_init(*extra[0]); /* maxsize */
+			add_next_index_long(*extra[0], ((MINMAXINFO*)*lParam)->ptMaxSize.x);
+			add_next_index_long(*extra[0], ((MINMAXINFO*)*lParam)->ptMaxSize.y);
+			array_init(*extra[1]); /* maxposition */
+			add_next_index_long(*extra[1], ((MINMAXINFO*)*lParam)->ptMaxPosition.x);
+			add_next_index_long(*extra[1], ((MINMAXINFO*)*lParam)->ptMaxPosition.y);
+			array_init(*extra[2]); /* mintracksize */
+			add_next_index_long(*extra[2], ((MINMAXINFO*)*lParam)->ptMinTrackSize.x);
+			add_next_index_long(*extra[2], ((MINMAXINFO*)*lParam)->ptMinTrackSize.y);
+			array_init(*extra[3]); /* maxtracksize */
+			add_next_index_long(*extra[3], ((MINMAXINFO*)*lParam)->ptMaxTrackSize.x);
+			add_next_index_long(*extra[3], ((MINMAXINFO*)*lParam)->ptMaxTrackSize.y);
+			break;
+		case WM_INPUTLANGCHANGE:
+		case WM_INPUTLANGCHANGEREQUEST:
+			*extra_count = 2;
+			extra = wingui_callback_extra_zvals_ctor(*extra_count);
+			ZVAL_LONG(*extra[0], *wParam);	/* character set, changerequest flags */
+			ZVAL_LONG(*extra[1], *lParam);	/* locale identifier */
+			break;
+		case WM_MOVE:
+			*extra_count = 2;
+			extra = wingui_callback_extra_zvals_ctor(*extra_count);
+			ZVAL_LONG(*extra[0], LOWORD(*lParam));	/* x */
+			ZVAL_LONG(*extra[1], HIWORD(*lParam));	/* y */
+			break;
+		case WM_SIZE:
+			*extra_count = 3;
+			extra = wingui_callback_extra_zvals_ctor(*extra_count);
+			ZVAL_LONG(*extra[0], *wParam);			/* state */
+			ZVAL_LONG(*extra[1], LOWORD(*lParam));	/* width */
+			ZVAL_LONG(*extra[2], HIWORD(*lParam));	/* height */
+			break;
+		case WM_COMMAND:
+			/* lparam is 0 we have Menu */
+			if (*lParam == 0 && HIWORD(*wParam) == 0) {
+				*extra_count = 1;
+				extra = wingui_callback_extra_zvals_ctor(*extra_count);
+				ZVAL_LONG(*extra[0], LOWORD(*wParam));	/* menu identifier */
+			}
+			break;
+	/* basic window message crackers 
+	case WM_GETICON:
+		// TODO: we don't have an icon class yet!
+		break;
+	/* Send these on to their destination classes 
+	case WM_NOTIFY:
+		switch (((LPNMHDR)lParam)->code)
+		{
+			/* LPNMHDR STRUCT 
+			HWND hwndFrom;
+			UINT_PTR idFrom;
+			UINT code; 
+			/* Statusbar rethrowing 
+			case NM_CLICK:
+			case NM_DBLCLK:
+			case NM_RCLICK:
+			case NM_RDBLCLK:
+			{
+				SendMessage((HWND) ((LPNMHDR)*lParam)->hwndFrom, WINGUI_INTERNAL_MESSAGE, ((LPNMHDR)*lParam)->code, *lParam);
+			}
+		}
+	case WM_COMMAND:
+		if (*lParam == 0) {
+			//extra = wingui_wmcommand_message_cracker(&wParam, &lParam, &extra_count);
+		} else {
+			/* Button messages are sent by default to the parent, this redirects to the button itself 
+			switch(HIWORD(*wParam)) {
+				case BCN_HOTITEMCHANGE:
+				case BN_CLICKED:
+				case BN_DBLCLK:
+				case BN_DISABLE:
+				case BN_HILITE: // BN_PUSHED
+				case BN_KILLFOCUS:
+				case BN_PAINT:
+				case BN_SETFOCUS:
+				case BN_UNHILITE: // BN_UNPUSHED
+				{
+					SendMessage((HWND) *lParam, HIWORD(*wParam), 0, 0);
+					break;
+				}
+			}
+			
+		}
+		break;*/
+	}
+	return extra;
+}
+/* }}} */
+
+/* put zval return values from from messages into lresult vals */
+LRESULT wingui_window_messages_results(int msg, zval *return_value TSRMLS_DC)
+{
+	return (LRESULT) NULL;
+	switch(msg) {
+		/* POST only - no return */
+		case WM_INPUTLANGCHANGEREQUEST:
+			return (LRESULT) NULL;
+			break;
+		/* These messages should return 0 if they process the message */
+		case WM_ACTIVATEAPP:
+		case WM_CANCELMODE:
+		case WM_CHILDACTIVATE:
+		case WM_CLOSE:
+		case WM_DESTROY:
+		case WM_ENABLE:
+		case WM_ENTERSIZEMOVE:
+		case WM_EXITSIZEMOVE:
+		case WM_GETMINMAXINFO:
+		case WM_MOVE:
+		case WM_COMMAND:
+		/* These messages should return non-zero if they process the message */
+		case WM_INPUTLANGCHANGE:
+			if (winsystem_juggle_type(return_value, IS_LONG TSRMLS_CC) == SUCCESS) {
+				return (LRESULT) Z_LVAL_P(return_value);
+			} else {
+				return (LRESULT) NULL;
+			}
+			break;
+		case WM_GETICON:
+			// TODO: need the icon ce, grab out the icon handle and return it
+			return (LRESULT) NULL;
+			break;
+		default:
+			return (LRESULT) NULL;
+	}
+}
+/* }}} */
+
+
 
 /* Grab current properties in class and use it to populate constructor data 
 int wingui_window_object_property_values(zval *object, int *x, int *y, int *height, int *width, char **text, int *style, int *extrastyle TSRMLS_DC)

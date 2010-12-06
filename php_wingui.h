@@ -192,10 +192,6 @@ extern HashTable wingui_control_prop_handlers;
 ------------------------------------------------------------------*/
 #define PHP_WINGUI_NS ZEND_NS_NAME("Win", "Gui")
 
-#define REGISTER_WINGUI_NAMED_CONST(ce, name, value) \
-	zend_declare_class_constant_long(ce, #name, sizeof(#name)-1, (long)value TSRMLS_CC);
-#define REGISTER_WINGUI_CONSTANT(ce, val) \
-	zend_declare_class_constant_long((ce), #val, sizeof(#val) - 1, (long)(val) TSRMLS_CC);
 #define REGISTER_WINGUI_MESSAGE_CONSTANT(ce, val, map, cb) \
 	zend_declare_class_constant_long((ce), #val, sizeof(#val) - 1, (val) TSRMLS_CC); \
 	zend_hash_index_update((map), (val), (void*)#cb, sizeof(#cb) + 2, NULL);
@@ -208,18 +204,13 @@ BOOL wingui_is_vista (TSRMLS_D);
 BOOL wingui_is_xp(TSRMLS_D);
 
 extern void wingui_resource_construction_wrapper(INTERNAL_FUNCTION_PARAMETERS);
-extern void wingui_window_object_construction_wrapper(INTERNAL_FUNCTION_PARAMETERS);
 
 LRESULT CALLBACK wingui_proc_handler(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
-zval* wingui_winproc_callback_dispatch(wingui_window_object *window_object, int msg, zval ***extra, int extra_count, zend_bool *stop_default TSRMLS_DC);
-
 void wingui_messaging_destructor_helper(HashTable *registered_callbacks TSRMLS_DC);
-int wingui_messaging_connect_helper(HashTable* callback_table, int message_code, zval*** args, int argc, zend_fcall_info finfo, zend_fcall_info_cache fcache, int send_args, int send_return TSRMLS_DC);
-int unset_abstract_flag(zend_function *func TSRMLS_DC, int num_args, va_list args, zend_hash_key *hash_key);
-
-void wingui_window_object_destructor(void *object TSRMLS_DC);
 
 zval ***wingui_window_messages_cracker(int msg, WPARAM *wParam, LPARAM *lParam, int *extra_count TSRMLS_DC);
+LRESULT wingui_window_messages_results(int msg, zval *return_value TSRMLS_DC);
+void wingui_window_messages_packer(int msg, WPARAM *wParam, LPARAM *lParam, zval ***extra TSRMLS_DC);
 
 static inline zval ***wingui_callback_extra_zvals_ctor(int argc)
 {

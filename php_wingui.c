@@ -120,28 +120,46 @@ PHP_MSHUTDOWN_FUNCTION(wingui)
 /* register a default "class" for windows */
 PHP_RINIT_FUNCTION(wingui)
 {
+	/* Do this twice, once for a unicode window, once without */
 	WNDCLASSEX wcx = { 0 };
+	WNDCLASSEXW wcxw = { 0 };
 	ATOM worked;
 
 	/* these are default values that can be overridden */
 	wcx.cbSize = sizeof(wcx);
+	wcxw.cbSize = sizeof(wcxw);
 	wcx.cbClsExtra = 0;
+	wcxw.cbClsExtra = 0;
 	wcx.cbWndExtra = sizeof(wingui_window_object *);
+	wcxw.cbWndExtra = sizeof(wingui_window_object *);
 	wcx.hInstance = GetModuleHandleW(NULL);
-	wcx.lpfnWndProc = DefWindowProc;
+	wcxw.hInstance = GetModuleHandle(NULL);
+	wcx.lpfnWndProc = wingui_proc_handler;
+	wcxw.lpfnWndProc = wingui_proc_handler;
 	wcx.lpszMenuName =  NULL;
+	wcxw.lpszMenuName =  NULL;
 	wcx.lpszClassName = "php_wingui_window";
+	wcxw.lpszClassName = L"php_wingui_window_unicode";
 	wcx.style = 0;
+	wcxw.style = 0;
 	wcx.hIcon = NULL;
+	wcxw.hIcon = NULL;
 	wcx.hCursor = LoadCursor(NULL, IDC_ARROW);
+	wcxw.hCursor = LoadCursor(NULL, IDC_ARROW);
 	wcx.hbrBackground = GetSysColorBrush(COLOR_WINDOW);
+	wcxw.hbrBackground = GetSysColorBrush(COLOR_WINDOW);
 	wcx.hIconSm = NULL;
+	wcxw.hIconSm = NULL;
 
-	worked = RegisterClassEx(&wcx);
+	worked = RegisterClassExA(&wcx);
 
 	if (worked == 0) {
 		return FAILURE;
 	} else {
+		worked = RegisterClassExW(&wcxw);
+		if (worked == 0) {
+			return FAILURE;
+		}
 		return SUCCESS;
 	}
 }
@@ -151,10 +169,14 @@ PHP_RSHUTDOWN_FUNCTION(wingui)
 {
 	BOOL worked;
 
-	worked = UnregisterClass("php_wingui_window", GetModuleHandleW(NULL));
+	worked = UnregisterClassA("php_wingui_window", GetModuleHandle(NULL));
 	if (worked == 0) {
 		return FAILURE;
 	} else {
+		worked = UnregisterClassW(L"php_wingui_window_unicode", GetModuleHandleW(NULL));
+		if (worked == 0) {
+			return FAILURE;
+		}
 		return SUCCESS;
 	}
 }

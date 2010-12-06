@@ -94,6 +94,9 @@ PHP_METHOD(WinGuiWindow, __construct)
 	HWND handle;
 	wingui_window_object *window_object = (wingui_window_object*)zend_object_store_get_object(getThis() TSRMLS_CC);
 
+	window_object->window_proc = DefWindowProc;
+	window_object->object_zval = getThis();
+
 	handle = CreateWindowExA(
 		0,
         "php_wingui_window", 
@@ -106,7 +109,7 @@ PHP_METHOD(WinGuiWindow, __construct)
         NULL,
         NULL,
         GetModuleHandle(NULL),
-        (LPVOID) NULL);
+        (LPVOID) window_object);
 
     if (!handle) {
 		winsystem_create_error(GetLastError(), ce_wingui_exception TSRMLS_CC);
@@ -115,8 +118,6 @@ PHP_METHOD(WinGuiWindow, __construct)
 		php_printf("so far, so good");
 		window_object->window_handle = handle;
 		window_object->is_constructed = TRUE;
-		window_object->object_zval = getThis();
-		//window_obj->window_proc = (WNDPROC) SetWindowLongPtr(hwnd, GWLP_WNDPROC, (LONG_PTR) wingui_proc_handler);
 		SetWindowLongPtr(handle, GWLP_USERDATA, (LONG_PTR) window_object);
 	}
 }
@@ -719,6 +720,7 @@ static zend_function_entry wingui_window_functions[] = {
 /* ----------------------------------------------------------------
   Win\Gui\Window Custom Object magic                               
 ------------------------------------------------------------------*/
+
 /* {{{ wingui_window_construction_wrapper
        wraps around the constructor to make sure parent::__construct is always called  */
 static void wingui_window_construction_wrapper(INTERNAL_FUNCTION_PARAMETERS) {
@@ -848,9 +850,9 @@ zend_object_value wingui_window_object_create(zend_class_entry *ce TSRMLS_DC)
 	window_object->prop_handler = &wingui_window_prop_handlers;
 	window_object->callback_map = &wingui_window_callback_map;
 	window_object->window_proc = NULL;
-	//window_object->messages_results = wingui_window_messages_results;
-	//window_object->messages_cracker = wingui_window_messages_cracker;
-	//window_object->messages_packer = wingui_window_messages_packer;
+	window_object->messages_cracker = wingui_window_messages_cracker;
+	window_object->messages_results = wingui_window_messages_results;
+	window_object->messages_packer = wingui_window_messages_packer;
 #ifdef ZTS
 	window_object->TSRMLS_C = TSRMLS_C;
 #endif
@@ -899,8 +901,53 @@ PHP_MINIT_FUNCTION(wingui_window)
 	wingui_window_constructor_wrapper.internal_function.handler = wingui_window_construction_wrapper;
 	wingui_window_constructor_wrapper.internal_function.module = EG(current_module);
 
-	/* Callback map for window */
+	/* Callback map for windows */
 	zend_hash_init(&wingui_window_callback_map, 0, NULL, NULL, 1);
+
+	/* Window Notifications */
+	REGISTER_WINGUI_MESSAGE_CONSTANT(ce_wingui_window,	WM_ACTIVATEAPP,				&wingui_window_callback_map,	__onwmactivateapp);
+	REGISTER_WINGUI_MESSAGE_CONSTANT(ce_wingui_window,	WM_CANCELMODE,				&wingui_window_callback_map,	__onwmcancelmode);
+	REGISTER_WINGUI_MESSAGE_CONSTANT(ce_wingui_window,	WM_CHILDACTIVATE,			&wingui_window_callback_map,	__onwmchildactivate);
+	REGISTER_WINGUI_MESSAGE_CONSTANT(ce_wingui_window,	WM_CLOSE,					&wingui_window_callback_map,	__onwmclose);
+	REGISTER_WINGUI_MESSAGE_CONSTANT(ce_wingui_window,	WM_CREATE,					&wingui_window_callback_map,	__onwmcreate);
+	REGISTER_WINGUI_MESSAGE_CONSTANT(ce_wingui_window,	WM_DESTROY,					&wingui_window_callback_map,	__onwmdestroy);
+	REGISTER_WINGUI_MESSAGE_CONSTANT(ce_wingui_window,	WM_ENABLE,					&wingui_window_callback_map,	__onwmenable);
+	REGISTER_WINGUI_MESSAGE_CONSTANT(ce_wingui_window,	WM_ENTERSIZEMOVE,			&wingui_window_callback_map,	__onwmentersizemove);
+	REGISTER_WINGUI_MESSAGE_CONSTANT(ce_wingui_window,	WM_EXITSIZEMOVE,			&wingui_window_callback_map,	__onwmexitsizemove);
+	REGISTER_WINGUI_MESSAGE_CONSTANT(ce_wingui_window,	WM_EXITSIZEMOVE,			&wingui_window_callback_map,	__onwmexitsizemove);
+	REGISTER_WINGUI_MESSAGE_CONSTANT(ce_wingui_window,	WM_GETICON,					&wingui_window_callback_map,	__onwmgeticon);
+	REGISTER_WINGUI_MESSAGE_CONSTANT(ce_wingui_window,	WM_GETMINMAXINFO,			&wingui_window_callback_map,	__onwmgetminmaxinfo);
+	REGISTER_WINGUI_MESSAGE_CONSTANT(ce_wingui_window,	WM_INPUTLANGCHANGE,			&wingui_window_callback_map,	__onwminputlangchange);
+	REGISTER_WINGUI_MESSAGE_CONSTANT(ce_wingui_window,	WM_INPUTLANGCHANGEREQUEST,	&wingui_window_callback_map,	__onwminputlangchangerequest);
+	REGISTER_WINGUI_MESSAGE_CONSTANT(ce_wingui_window,	WM_MOVE,					&wingui_window_callback_map,	__onwmmove);
+	REGISTER_WINGUI_MESSAGE_CONSTANT(ce_wingui_window,	WM_MOVING,					&wingui_window_callback_map,	__onwmmoving);
+	REGISTER_WINGUI_MESSAGE_CONSTANT(ce_wingui_window,	WM_NCACTIVATE,				&wingui_window_callback_map,	__onwmncactivate);
+	REGISTER_WINGUI_MESSAGE_CONSTANT(ce_wingui_window,	WM_NCCALCSIZE,				&wingui_window_callback_map,	__onwmnccalcsize);
+	REGISTER_WINGUI_MESSAGE_CONSTANT(ce_wingui_window,	WM_NCCREATE,				&wingui_window_callback_map,	__onwmnccreate);
+	REGISTER_WINGUI_MESSAGE_CONSTANT(ce_wingui_window,	WM_NCDESTROY,				&wingui_window_callback_map,	__onwmdestroy);
+	REGISTER_WINGUI_MESSAGE_CONSTANT(ce_wingui_window,	WM_NULL,					&wingui_window_callback_map,	__onwmnull);
+	REGISTER_WINGUI_MESSAGE_CONSTANT(ce_wingui_window,	WM_PARENTNOTIFY,			&wingui_window_callback_map,	__onwmparentnotify);
+	REGISTER_WINGUI_MESSAGE_CONSTANT(ce_wingui_window,	WM_QUERYDRAGICON,			&wingui_window_callback_map,	__onwmquerydragicon);
+	REGISTER_WINGUI_MESSAGE_CONSTANT(ce_wingui_window,	WM_QUERYOPEN,				&wingui_window_callback_map,	__onwmqueryopen);
+	REGISTER_WINGUI_MESSAGE_CONSTANT(ce_wingui_window,	WM_SHOWWINDOW,				&wingui_window_callback_map,	__onwmshowwindow);
+	REGISTER_WINGUI_MESSAGE_CONSTANT(ce_wingui_window,	WM_SIZE,					&wingui_window_callback_map,	__onwmsize);
+	REGISTER_WINGUI_MESSAGE_CONSTANT(ce_wingui_window,	WM_SIZING,					&wingui_window_callback_map,	__onwmsizing);
+	REGISTER_WINGUI_MESSAGE_CONSTANT(ce_wingui_window,	WM_STYLECHANGED,			&wingui_window_callback_map,	__onwmstylechanged);
+	REGISTER_WINGUI_MESSAGE_CONSTANT(ce_wingui_window,	WM_STYLECHANGING,			&wingui_window_callback_map,	__onwmstylechanging);
+	REGISTER_WINGUI_MESSAGE_CONSTANT(ce_wingui_window,	WM_THEMECHANGED,			&wingui_window_callback_map,	__onwmthemechanged);
+	REGISTER_WINGUI_MESSAGE_CONSTANT(ce_wingui_window,	WM_USERCHANGED,				&wingui_window_callback_map,	__onwmuserchanged);
+	REGISTER_WINGUI_MESSAGE_CONSTANT(ce_wingui_window,	WM_WINDOWPOSCHANGED,		&wingui_window_callback_map,	__onwmwindowposchanged);
+	REGISTER_WINGUI_MESSAGE_CONSTANT(ce_wingui_window,	WM_WINDOWPOSCHANGING,		&wingui_window_callback_map,	__onwmwindowposchanging);
+
+	/* Window Messages */
+	REGISTER_WINGUI_MESSAGE_CONSTANT(ce_wingui_window,	MN_GETHMENU,				&wingui_window_callback_map,	__onmngethmenu);
+	REGISTER_WINGUI_MESSAGE_CONSTANT(ce_wingui_window,	WM_ERASEBKGND,				&wingui_window_callback_map,	__onerasebkgnd);
+	REGISTER_WINGUI_MESSAGE_CONSTANT(ce_wingui_window,	WM_GETFONT,					&wingui_window_callback_map,	__onwmgetfont);
+	REGISTER_WINGUI_MESSAGE_CONSTANT(ce_wingui_window,	WM_GETTEXT,					&wingui_window_callback_map,	__onwmgettext);
+	REGISTER_WINGUI_MESSAGE_CONSTANT(ce_wingui_window,	WM_GETTEXTLENGTH,			&wingui_window_callback_map,	__onwmtettextlength);
+	REGISTER_WINGUI_MESSAGE_CONSTANT(ce_wingui_window,	WM_SETFONT,					&wingui_window_callback_map,	__onwmsetfont);
+	REGISTER_WINGUI_MESSAGE_CONSTANT(ce_wingui_window,	WM_SETICON,					&wingui_window_callback_map,	__onwmseticon);
+	REGISTER_WINGUI_MESSAGE_CONSTANT(ce_wingui_window,	WM_SETTEXT,					&wingui_window_callback_map,	__onwmsettext);
 
 	/* Callback map for properties */
 	zend_hash_init(&wingui_window_prop_handlers, 0, NULL, NULL, 1);
