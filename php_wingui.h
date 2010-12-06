@@ -192,6 +192,8 @@ extern HashTable wingui_control_prop_handlers;
 ------------------------------------------------------------------*/
 #define PHP_WINGUI_NS ZEND_NS_NAME("Win", "Gui")
 
+#define PHP_WINGUI_END_MESSAGE WM_APP + 1
+
 #define REGISTER_WINGUI_MESSAGE_CONSTANT(ce, val, map, cb) \
 	zend_declare_class_constant_long((ce), #val, sizeof(#val) - 1, (val) TSRMLS_CC); \
 	zend_hash_index_update((map), (val), (void*)#cb, sizeof(#cb) + 2, NULL);

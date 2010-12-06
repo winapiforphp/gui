@@ -81,7 +81,7 @@ PHP_MINIT_FUNCTION(wingui)
 	//PHP_MINIT(wingui_windowing)(INIT_FUNC_ARGS_PASSTHRU);
 
 	/* Tools */
-	//PHP_MINIT(wingui_message)(INIT_FUNC_ARGS_PASSTHRU);
+	PHP_MINIT(wingui_message)(INIT_FUNC_ARGS_PASSTHRU);
 	//PHP_MINIT(wingui_input)(INIT_FUNC_ARGS_PASSTHRU);
 	PHP_MINIT(wingui_window)(INIT_FUNC_ARGS_PASSTHRU);
 

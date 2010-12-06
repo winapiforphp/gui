@@ -15,19 +15,15 @@
   | Author: Elizabeth Smith <auroraeosrose@php.net>                      |
   +----------------------------------------------------------------------+
 */
-
-/* $Id$ */
-
 #include "php_wingui.h"
 #include "zend_exceptions.h"
 
-ZEND_DECLARE_MODULE_GLOBALS(wingui);
 
 /* All the classes in this file */
 zend_class_entry *ce_wingui_message;
-zend_class_entry *ce_wingui_message_queuestatus;
-zend_class_entry *ce_wingui_message_insend;
-HashTable wingui_message_prop_handlers;
+//zend_class_entry *ce_wingui_message_queuestatus;
+//zend_class_entry *ce_wingui_message_insend;
+//HashTable wingui_message_prop_handlers;
 
 /* ----------------------------------------------------------------
   Win\Gui\Message Userland API                                                      
@@ -471,18 +467,26 @@ PHP_METHOD(WinGuiMessage, run)
 	}
 	zend_restore_error_handling(&error_handling TSRMLS_CC);
 
-	hinstance = WINGUI_G(hinstance);
+	hinstance = GetModuleHandle(NULL);
 
+	while((result = GetMessage(&msg, NULL, 0, 0 )) != 0) {
+		if (FAILED(result)) {
+			/* Blow up and quit */
+			php_error(E_RECOVERABLE_ERROR, "Result of %d for msg:%d at time: %d", result, msg.message, msg.time);
+			PostQuitMessage(1);
+		} else if (msg.message == PHP_WINGUI_END_MESSAGE) {
+			/* our special message, so return */
+			return;
+		} else {
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
+		}
+	}
+
+/*
 	while((result = GetMessage(&msg, NULL, 0, 0 )) > 0) {
 		//if (FAILED(result)) {
-			/* Blow up and quit */
-		//	MessageBox(NULL, "An unknown error has occurred! The application will now terminate.", "Error!", MB_OK);
-		//	PostQuitMessage(1);
 		//} else {
-			if (WINGUI_G(end_main) == TRUE) {
-				WINGUI_G(end_main) = FALSE;
-				return;
-			}
 			// todo - support accelerator table stuff
 			//if(!TranslateAccelerator(hAccelWnd, hAccelTable, &msg))
 			//{
@@ -494,9 +498,9 @@ PHP_METHOD(WinGuiMessage, run)
 				//}
 			//}
 		//}
-	}
+	} */
 
-	PostQuitMessage(1);
+	PostQuitMessage(0);
 	RETURN_LONG(msg.wParam);
 }
  /* }}} */
@@ -513,10 +517,8 @@ PHP_METHOD(WinGuiMessage, end)
 	}
 	zend_restore_error_handling(&error_handling TSRMLS_CC);
 
-	WINGUI_G(end_main) = TRUE;
-
 	/* Force the messaging pump */
-	PostMessage(NULL, WM_NULL, (WPARAM) NULL, (LPARAM) NULL);
+	PostMessage(NULL, PHP_WINGUI_END_MESSAGE, (WPARAM) NULL, (LPARAM) NULL);
 }
  /* }}} */
 
@@ -645,11 +647,11 @@ PHP_MINIT_FUNCTION(wingui_message)
 	//wingui_register_prop_handler(&wingui_message_prop_handlers, ce_wingui_message, "x", wingui_message_read, NULL TSRMLS_CC);
 	//wingui_register_prop_handler(&wingui_message_prop_handlers, ce_wingui_message, "y", wingui_message_read, NULL TSRMLS_CC);
 
-	INIT_NS_CLASS_ENTRY(queue_ce, PHP_WINGUI_NS, ZEND_NS_NAME("Message", "QueueStatus"), NULL);
-	ce_wingui_message_queuestatus = zend_register_internal_class(&queue_ce TSRMLS_CC);
-	ce_wingui_message_queuestatus->ce_flags |= ZEND_ACC_EXPLICIT_ABSTRACT_CLASS | ZEND_ACC_FINAL_CLASS;
+	//INIT_NS_CLASS_ENTRY(queue_ce, PHP_WINGUI_NS, ZEND_NS_NAME("Message", "QueueStatus"), NULL);
+	//ce_wingui_message_queuestatus = zend_register_internal_class(&queue_ce TSRMLS_CC);
+	//ce_wingui_message_queuestatus->ce_flags |= ZEND_ACC_EXPLICIT_ABSTRACT_CLASS | ZEND_ACC_FINAL_CLASS;
 
-	/* These are Queue Status constants */
+	/* These are Queue Status constants 
 	REGISTER_WINGUI_NAMED_CONST(ce_wingui_message_queuestatus,	"ALLEVENTS", QS_ALLEVENTS);
 	REGISTER_WINGUI_NAMED_CONST(ce_wingui_message_queuestatus,	"ALLINPUT", QS_ALLINPUT);
 	REGISTER_WINGUI_NAMED_CONST(ce_wingui_message_queuestatus,	"ALLPOSTMESSAGE", QS_ALLPOSTMESSAGE);
@@ -665,7 +667,7 @@ PHP_MINIT_FUNCTION(wingui_message)
 	REGISTER_WINGUI_NAMED_CONST(ce_wingui_message_queuestatus,	"SENDMESSAGE", QS_SENDMESSAGE);
 	REGISTER_WINGUI_NAMED_CONST(ce_wingui_message_queuestatus,	"TIMER", QS_TIMER);
 
-	/* These are "in send" constants */
+	/* These are "in send" constants 
 	INIT_NS_CLASS_ENTRY(queue_ce, PHP_WINGUI_NS, ZEND_NS_NAME("Message", "InSend"), NULL);
 	ce_wingui_message_insend = zend_register_internal_class(&queue_ce TSRMLS_CC);
 	ce_wingui_message_insend->ce_flags |= ZEND_ACC_EXPLICIT_ABSTRACT_CLASS | ZEND_ACC_FINAL_CLASS;
@@ -677,20 +679,20 @@ PHP_MINIT_FUNCTION(wingui_message)
 	REGISTER_WINGUI_NAMED_CONST(ce_wingui_message_insend,	"SEND", ISMEX_SEND);
 
 	/* These are broadcast options */
-	REGISTER_WINGUI_CONSTANT(ce_wingui_message,	BSF_ALLOWSFW);
-	REGISTER_WINGUI_CONSTANT(ce_wingui_message,	BSF_FLUSHDISK);
-	REGISTER_WINGUI_CONSTANT(ce_wingui_message,	BSF_FORCEIFHUNG);
-	REGISTER_WINGUI_CONSTANT(ce_wingui_message,	BSF_IGNORECURRENTTASK);
-	REGISTER_WINGUI_CONSTANT(ce_wingui_message,	BSF_NOHANG);
-	REGISTER_WINGUI_CONSTANT(ce_wingui_message,	BSF_NOTIMEOUTIFNOTHUNG);
-	REGISTER_WINGUI_CONSTANT(ce_wingui_message,	BSF_POSTMESSAGE);
-	REGISTER_WINGUI_CONSTANT(ce_wingui_message,	BSF_QUERY);
-	REGISTER_WINGUI_CONSTANT(ce_wingui_message,	BSF_SENDNOTIFYMESSAGE);
+	//REGISTER_WINGUI_CONSTANT(ce_wingui_message,	BSF_ALLOWSFW);
+	//REGISTER_WINGUI_CONSTANT(ce_wingui_message,	BSF_FLUSHDISK);
+	//REGISTER_WINGUI_CONSTANT(ce_wingui_message,	BSF_FORCEIFHUNG);
+	//REGISTER_WINGUI_CONSTANT(ce_wingui_message,	BSF_IGNORECURRENTTASK);
+	//REGISTER_WINGUI_CONSTANT(ce_wingui_message,	BSF_NOHANG);
+	//REGISTER_WINGUI_CONSTANT(ce_wingui_message,	BSF_NOTIMEOUTIFNOTHUNG);
+	//REGISTER_WINGUI_CONSTANT(ce_wingui_message,	BSF_POSTMESSAGE);
+	//REGISTER_WINGUI_CONSTANT(ce_wingui_message,	BSF_QUERY);
+	//REGISTER_WINGUI_CONSTANT(ce_wingui_message,	BSF_SENDNOTIFYMESSAGE);
 
 	/* These are broadcast recipient options */
-	REGISTER_WINGUI_CONSTANT(ce_wingui_message,	BSM_ALLCOMPONENTS);
-	REGISTER_WINGUI_CONSTANT(ce_wingui_message,	BSM_ALLDESKTOPS);
-	REGISTER_WINGUI_CONSTANT(ce_wingui_message,	BSM_APPLICATIONS);
+	////REGISTER_WINGUI_CONSTANT(ce_wingui_message,	BSM_ALLCOMPONENTS);
+	//REGISTER_WINGUI_CONSTANT(ce_wingui_message,	BSM_ALLDESKTOPS);
+	//REGISTER_WINGUI_CONSTANT(ce_wingui_message,	BSM_APPLICATIONS);
 
 	return SUCCESS;
 }
