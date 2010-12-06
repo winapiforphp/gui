@@ -1,4 +1,4 @@
-/*
+﻿/*
   +----------------------------------------------------------------------+
   | PHP Version 5                                                        |
   +----------------------------------------------------------------------+
@@ -91,16 +91,33 @@ ZEND_END_ARG_INFO()
      height and width are client area, not window area */
 PHP_METHOD(WinGuiWindow, __construct)
 {
+	zend_error_handling error_handling;
+	HashTable *options = NULL;
 	HWND handle;
+
+	zend_bool use_unicode = FALSE;
+	char * name = "Title";
+	wchar_t * unicode = L"Title";
+
 	wingui_window_object *window_object = (wingui_window_object*)zend_object_store_get_object(getThis() TSRMLS_CC);
 
-	window_object->window_proc = DefWindowProc;
 	window_object->object_zval = getThis();
 
-	handle = CreateWindowExA(
+	zend_replace_error_handling(EH_THROW, ce_wingui_argexception, &error_handling TSRMLS_CC);
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|H", &options) == FAILURE) {
+		return;
+	}
+	zend_restore_error_handling(&error_handling TSRMLS_CC);
+
+	if (options) {
+		wingui_window_object_get_text(options, &use_unicode, &name, &unicode TSRMLS_CC);
+	}
+
+	if (use_unicode) {
+		handle = CreateWindowExW(
 		0,
-        "php_wingui_window", 
-        "Test",
+        L"php_wingui_window_unicode", 
+        unicode,
         WS_OVERLAPPEDWINDOW,
         CW_USEDEFAULT,
         CW_USEDEFAULT,
@@ -110,12 +127,26 @@ PHP_METHOD(WinGuiWindow, __construct)
         NULL,
         GetModuleHandle(NULL),
         (LPVOID) window_object);
+	} else {
+		handle = CreateWindowExA(
+		0,
+        "php_wingui_window", 
+        name,
+        WS_OVERLAPPEDWINDOW,
+        CW_USEDEFAULT,
+        CW_USEDEFAULT,
+        CW_USEDEFAULT,
+        CW_USEDEFAULT,
+        NULL,
+        NULL,
+        GetModuleHandle(NULL),
+        (LPVOID) window_object);
+	}
 
     if (!handle) {
 		winsystem_create_error(GetLastError(), ce_wingui_exception TSRMLS_CC);
 		return;
 	} else {
-		php_printf("so far, so good");
 		window_object->window_handle = handle;
 		window_object->is_constructed = TRUE;
 		SetWindowLongPtr(handle, GWLP_USERDATA, (LONG_PTR) window_object);

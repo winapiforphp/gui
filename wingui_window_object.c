@@ -259,6 +259,14 @@ LRESULT CALLBACK wingui_proc_handler(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 		wingui_callback_extra_zvals_dtor(extra_count, extra);
 	}
 
+	if(!window_object->window_proc) {
+		if (IsWindowUnicode(hwnd)) {
+			window_object->window_proc = DefWindowProcW;
+		} else {
+			window_object->window_proc = DefWindowProcA;
+		}
+	}
+
 	/* return is based on if we need to call the default proc handling, and if we have an overwritten
 	   return value to use instead of the default value */
 	if (stop_default && return_value) {
@@ -280,6 +288,7 @@ LRESULT CALLBACK wingui_proc_handler(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
   wingui_window_object basic window crackers, packers
   LRESULTs in and LRESULTS out
 ------------------------------------------------------------------*/
+
 /* put zvals into lparams, wparams before calling defaultproc */
 void wingui_window_messages_packer(int msg, WPARAM *wParam, LPARAM *lParam, zval ***extra TSRMLS_DC)
 {
@@ -574,7 +583,24 @@ LRESULT wingui_window_messages_results(int msg, zval *return_value TSRMLS_DC)
 }
 /* }}} */
 
+/* ----------------------------------------------------------------
+  parameter parsing helpers for windows
+------------------------------------------------------------------*/
+int wingui_window_object_get_text(HashTable *options, zend_bool *use_unicode, char ** name, wchar_t ** unicode TSRMLS_DC)
+{
+	zval **value;
 
+	if (zend_hash_find(options, "title", sizeof("title"), (void **) &value) == SUCCESS) {
+		if (Z_TYPE_PP(value) == IS_OBJECT && instanceof_function(Z_OBJCE_PP(value), ce_winsystem_unicode TSRMLS_CC)) {
+			winsystem_unicode_object *unicode_object = (winsystem_unicode_object *)zend_object_store_get_object(*value TSRMLS_CC);
+			*use_unicode = TRUE;
+			*unicode = unicode_object->unicode_string;
+		} else if (SUCCESS == winsystem_juggle_type(*value, IS_STRING TSRMLS_CC)) {
+			*name = Z_STRVAL_PP(value);
+		}
+	}
+	return FAILURE;
+}
 
 /* Grab current properties in class and use it to populate constructor data 
 int wingui_window_object_property_values(zval *object, int *x, int *y, int *height, int *width, char **text, int *style, int *extrastyle TSRMLS_DC)
@@ -817,7 +843,7 @@ int wingui_window_object_property_values(zval *object, int *x, int *y, int *heig
 		{
 			*style |= WS_CAPTION;
 		}
-	}
+	} 
 	return SUCCESS;
 }
 /* }}} */
