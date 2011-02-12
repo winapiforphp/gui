@@ -96,7 +96,7 @@ PHP_MINIT_FUNCTION(wingui)
 	//PHP_MINIT(wingui_menu)(INIT_FUNC_ARGS_PASSTHRU);
 
 	/* Controls */
-	//PHP_MINIT(wingui_control)(INIT_FUNC_ARGS_PASSTHRU);
+	PHP_MINIT(wingui_control)(INIT_FUNC_ARGS_PASSTHRU);
 	//PHP_MINIT(wingui_control_button)(INIT_FUNC_ARGS_PASSTHRU);
 	//PHP_MINIT(wingui_control_listview)(INIT_FUNC_ARGS_PASSTHRU);
 	//PHP_MINIT(wingui_control_static)(INIT_FUNC_ARGS_PASSTHRU);

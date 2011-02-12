@@ -12,10 +12,9 @@
   | obtain it through the world-wide-web, please send a note to          |
   | license@php.net so we can mail you a copy immediately.               |
   +----------------------------------------------------------------------+
-  | Author: Elizabeth Smith <auroraeosrose@php.net>                      |
+  | Author: Elizabeth M Smith <auroraeosrose@php.net>                    |
   +----------------------------------------------------------------------+
 */
-
 
 #include "php_wingui.h"
 #include "php_winsystem_api.h"
@@ -25,14 +24,14 @@
   wingui_window_object window procedure functionality
 ------------------------------------------------------------------*/
 
-/* Does the callback dispatching, a helper function used by the default window procedure
-	The dispatch happens in two steps - first it calls any attached callbacks
-	 in order (remember attached messages are pushed onto the top so FILO order)
-	 and then any "default" registered handlers are called
-	 
-	 This can be short circuited any time by a "true" return from a callback, which
-	 will halt ALL the bubbling.  Return values are available if a callback is connected
-	 with the full variant or default callback ONLY */
+/*  Does the callback dispatching, a helper function used by the default window procedure
+    The dispatch happens in two steps - first it calls any attached callbacks
+    in order (remember attached messages are pushed onto the top so FILO order)
+    and then any "default" registered handlers are called
+
+    This can be short circuited any time by a "true" return from a callback, which
+    will halt ALL the bubbling.  Return values are available if a callback is connected
+    with the full variant or default callback ONLY */
 zval* wingui_winproc_callback_dispatch(wingui_window_object *window_object, int msg, zval ***extra,
 	int extra_count, zend_bool *stop_default TSRMLS_DC)
 {
@@ -587,7 +586,7 @@ LRESULT wingui_window_messages_results(int msg, zval *return_value TSRMLS_DC)
   parameter parsing helpers for windows
 ------------------------------------------------------------------*/
 int wingui_window_object_get_basics(HashTable *options, zend_bool *use_unicode, char ** name, wchar_t ** unicode,
-									long *x, long *y, long *width, long *height TSRMLS_DC)
+	long *x, long *y, long *width, long *height TSRMLS_DC)
 {
 	zval **value;
 

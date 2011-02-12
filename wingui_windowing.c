@@ -24,6 +24,9 @@
 /* All the classes in this file */
 zend_class_entry *ce_wingui_windowing;
 
+/* Notice this is not static, other things gonna use it */
+HashTable wingui_windowing_prop_handlers;
+
 /* ----------------------------------------------------------------
   Win\Gui\Windowing Userland API
 ------------------------------------------------------------------*/
@@ -509,11 +512,11 @@ static zend_function_entry wingui_windowing_functions[] = {
 };
 
 /* ----------------------------------------------------------------
-  Win\Gui\Window C API
+  Win\Gui\Window Property Handlers
 ------------------------------------------------------------------*/
 
 /* ----------------------------------------------------------------
-  Win\Gui\Windowing LifeCycle Functions                                                    
+  Win\Gui\Windowing LifeCycle Functions
 ------------------------------------------------------------------*/
 PHP_MINIT_FUNCTION(wingui_windowing)
 {
@@ -522,6 +525,15 @@ PHP_MINIT_FUNCTION(wingui_windowing)
 	INIT_NS_CLASS_ENTRY(ce, PHP_WINGUI_NS, "Windowing", wingui_windowing_functions);
 	ce_wingui_windowing = zend_register_internal_class(&ce TSRMLS_CC);
 	ce_wingui_windowing->ce_flags |= ZEND_ACC_INTERFACE;
+
+	/* Property map for all items that implement windowing */
+	zend_hash_init(&wingui_windowing_prop_handlers, 0, NULL, NULL, 1);
+	//wingui_register_prop_handler(&wingui_windowing_prop_handlers, ce_wingui_window, "x", wingui_window_read_pos, wingui_window_write_size TSRMLS_CC);
+	//wingui_register_prop_handler(&wingui_windowing_prop_handlers, ce_wingui_window, "y", wingui_window_read_pos, wingui_window_write_size TSRMLS_CC);
+	//wingui_register_prop_handler(&wingui_windowing_prop_handlers, ce_wingui_window, "width", wingui_window_read_size, wingui_window_write_size TSRMLS_CC);
+	//wingui_register_prop_handler(&wingui_windowing_prop_handlers, ce_wingui_window, "height", wingui_window_read_size, wingui_window_write_size TSRMLS_CC);
+	//wingui_register_prop_handler(&wingui_windowing_prop_handlers, ce_wingui_window, "text", wingui_window_read_text, wingui_window_write_text TSRMLS_CC);
+	//wingui_register_prop_handler(&wingui_windowing_prop_handlers, ce_wingui_window, "parent", wingui_window_read_parent, wingui_window_write_parent TSRMLS_CC);
 
 	return SUCCESS;
 }

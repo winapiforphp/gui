@@ -171,7 +171,7 @@ extern zend_class_entry *ce_wingui_resource_cursor;
 
 extern zend_class_entry *ce_wingui_messaging;
 extern zend_class_entry *ce_wingui_inputing;
-extern zend_class_entry *ce_wingui_windowing;
+
 
 extern zend_class_entry *ce_wingui_menu;
 extern zend_class_entry *ce_wingui_menuitem;

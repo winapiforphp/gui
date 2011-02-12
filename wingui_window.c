@@ -255,12 +255,6 @@ PHP_METHOD(WinGuiWindow, getPopupPosition)
 
 	CalculatePopupWindowPositionFunc CalculatePopupWindowPositionFuncHandle;
 
-	/* Short Circuit if we're NOT on windows 7 */
-	if(!wingui_is_win7(TSRMLS_C)) {
-		zend_throw_exception(ce_wingui_versionexception, "Win\\Gui\\Window::popupPosition() does not work on Windows versions before Windows 7", 0 TSRMLS_CC);
-		return;
-	}
-
 	zend_replace_error_handling(EH_THROW, ce_wingui_argexception, &error_handling TSRMLS_CC);
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "llll|la", &x, &y, &width, &height, &flags, &exclude_array) == FAILURE) {
 		return;
@@ -359,12 +353,6 @@ PHP_METHOD(WinGuiWindow, soundSentry)
 	}
 	zend_restore_error_handling(&error_handling TSRMLS_CC);
 
-	/* Short Circuit if we're NOT on vista */
-	if(!wingui_is_vista(TSRMLS_C)) {
-		zend_throw_exception(ce_wingui_versionexception, "Win\\Gui\\Container::soundSentry() does not work on Windows versions before Vista", 0 TSRMLS_CC);
-		return;
-	}
-	
 	module = GetModuleHandle("user32.dll");
 
 	if (module) {
@@ -487,12 +475,6 @@ PHP_METHOD(WinGuiWindow, getFromPhysicalPoint)
 
 	typedef HWND (WINAPI *WindowFromPhysicalPointFunc)(POINT);
 	WindowFromPhysicalPointFunc WindowFromPhysicalPointFuncHandle;
-
-	/* Short Circuit if we're NOT on vista */
-	if(!wingui_is_vista(TSRMLS_C)) {
-		zend_throw_exception(ce_wingui_versionexception, "Win\\Gui\\Window::getFromPhysicalPoint() does not work on Windows versions before Vista", 0 TSRMLS_CC);
-		return;
-	}
 
 	zend_replace_error_handling(EH_THROW, ce_wingui_argexception, &error_handling TSRMLS_CC);
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ll", &x, &y) == FAILURE) {
@@ -745,8 +727,9 @@ PHP_METHOD(WinGuiWindow, unregisterClass)
 
 
 
-/* Window Methods */
-static zend_function_entry wingui_window_functions[] = {
+/* Window Methods - why are there three of these?  Because altering the struct at runtime is a lesson
+   in pain, far easier to just do three structs and register the right set in MINIT depending on platform */
+static zend_function_entry wingui_window_functions_win7[] = {
 	PHP_ME(WinGuiWindow, __construct, NULL, ZEND_ACC_PUBLIC | ZEND_ACC_CTOR)
 
 	PHP_ME(WinGuiWindow, allowSetForeground, WinGuiWindow_allowSetForeground_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
@@ -756,6 +739,82 @@ static zend_function_entry wingui_window_functions[] = {
 	PHP_ME(WinGuiWindow, soundSentry, WinGuiWindow_soundSentry_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
 	PHP_ME(WinGuiWindow, tile, WinGuiWindow_tile_args, ZEND_ACC_PUBLIC)
 	PHP_ME(WinGuiWindow, getFromPhysicalPoint, WinGuiWindow_getFromPhysicalPoint_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+	PHP_ME(WinGuiWindow, getFromPoint, WinGuiWindow_getFromPoint_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+
+	/* Window Class Stuff */
+	PHP_ME(WinGuiWindow, registerClass, WinGuiWindow_registerClass_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+	PHP_ME(WinGuiWindow, unregisterClass, WinGuiWindow_unregisterClass_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+
+	/* Implement messaging */
+	PHP_ME(WinGuiMessaging, connect, WinGuiMessaging_connect_args, ZEND_ACC_PUBLIC)
+	PHP_ME(WinGuiMessaging, connectFull, WinGuiMessaging_connectFull_args, ZEND_ACC_PUBLIC)
+	PHP_ME(WinGuiMessaging, connectSimple, WinGuiMessaging_connectSimple_args, ZEND_ACC_PUBLIC)
+	PHP_ME(WinGuiMessaging, disconnect, WinGuiMessaging_disconnect_args, ZEND_ACC_PUBLIC)
+	PHP_ME(WinGuiMessaging, get, WinGuiMessaging_get_args, ZEND_ACC_PUBLIC)
+	PHP_ME(WinGuiMessaging, peek, WinGuiMessaging_peek_args, ZEND_ACC_PUBLIC)
+	PHP_ME(WinGuiMessaging, post, WinGuiMessaging_post_args, ZEND_ACC_PUBLIC)
+	PHP_ME(WinGuiMessaging, send, WinGuiMessaging_send_args, ZEND_ACC_PUBLIC)
+	PHP_ME(WinGuiMessaging, sendNotify, WinGuiMessaging_sendNotify_args, ZEND_ACC_PUBLIC)
+	PHP_ME(WinGuiMessaging, sendCallback, WinGuiMessaging_sendCallback_args, ZEND_ACC_PUBLIC)
+	PHP_ME(WinGuiMessaging, sendTimeout, WinGuiMessaging_sendTimeout_args, ZEND_ACC_PUBLIC)
+
+	/* Implement Windowing */
+	PHP_ME(WinGuiWindowing, adjustSize, WinGuiWindowing_adjustSize_args, ZEND_ACC_PUBLIC)
+	PHP_ME(WinGuiWindowing, animateShow, WinGuiWindowing_animateShow_args, ZEND_ACC_PUBLIC)
+	PHP_ME(WinGuiWindowing, animateHide, WinGuiWindowing_animateHide_args, ZEND_ACC_PUBLIC)
+	PHP_ME(WinGuiWindowing, getNext, WinGuiWindowing_getNext_args, ZEND_ACC_PUBLIC)
+	PHP_ME(WinGuiWindowing, getPrevious, WinGuiWindowing_getPrevious_args, ZEND_ACC_PUBLIC)
+	PHP_ME(WinGuiWindowing, hide, WinGuiWindowing_hide_args, ZEND_ACC_PUBLIC)
+	PHP_ME(WinGuiWindowing, show, WinGuiWindowing_show_args, ZEND_ACC_PUBLIC)
+	{NULL, NULL, NULL}
+};
+
+static zend_function_entry wingui_window_functions_vista[] = {
+	PHP_ME(WinGuiWindow, __construct, NULL, ZEND_ACC_PUBLIC | ZEND_ACC_CTOR)
+
+	PHP_ME(WinGuiWindow, allowSetForeground, WinGuiWindow_allowSetForeground_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+	PHP_ME(WinGuiWindow, bringToTop, WinGuiWindow_bringToTop_args, ZEND_ACC_PUBLIC)
+
+	PHP_ME(WinGuiWindow, soundSentry, WinGuiWindow_soundSentry_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+	PHP_ME(WinGuiWindow, tile, WinGuiWindow_tile_args, ZEND_ACC_PUBLIC)
+	PHP_ME(WinGuiWindow, getFromPhysicalPoint, WinGuiWindow_getFromPhysicalPoint_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+	PHP_ME(WinGuiWindow, getFromPoint, WinGuiWindow_getFromPoint_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+
+	/* Window Class Stuff */
+	PHP_ME(WinGuiWindow, registerClass, WinGuiWindow_registerClass_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+	PHP_ME(WinGuiWindow, unregisterClass, WinGuiWindow_unregisterClass_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+
+	/* Implement messaging */
+	PHP_ME(WinGuiMessaging, connect, WinGuiMessaging_connect_args, ZEND_ACC_PUBLIC)
+	PHP_ME(WinGuiMessaging, connectFull, WinGuiMessaging_connectFull_args, ZEND_ACC_PUBLIC)
+	PHP_ME(WinGuiMessaging, connectSimple, WinGuiMessaging_connectSimple_args, ZEND_ACC_PUBLIC)
+	PHP_ME(WinGuiMessaging, disconnect, WinGuiMessaging_disconnect_args, ZEND_ACC_PUBLIC)
+	PHP_ME(WinGuiMessaging, get, WinGuiMessaging_get_args, ZEND_ACC_PUBLIC)
+	PHP_ME(WinGuiMessaging, peek, WinGuiMessaging_peek_args, ZEND_ACC_PUBLIC)
+	PHP_ME(WinGuiMessaging, post, WinGuiMessaging_post_args, ZEND_ACC_PUBLIC)
+	PHP_ME(WinGuiMessaging, send, WinGuiMessaging_send_args, ZEND_ACC_PUBLIC)
+	PHP_ME(WinGuiMessaging, sendNotify, WinGuiMessaging_sendNotify_args, ZEND_ACC_PUBLIC)
+	PHP_ME(WinGuiMessaging, sendCallback, WinGuiMessaging_sendCallback_args, ZEND_ACC_PUBLIC)
+	PHP_ME(WinGuiMessaging, sendTimeout, WinGuiMessaging_sendTimeout_args, ZEND_ACC_PUBLIC)
+
+	/* Implement Windowing */
+	PHP_ME(WinGuiWindowing, adjustSize, WinGuiWindowing_adjustSize_args, ZEND_ACC_PUBLIC)
+	PHP_ME(WinGuiWindowing, animateShow, WinGuiWindowing_animateShow_args, ZEND_ACC_PUBLIC)
+	PHP_ME(WinGuiWindowing, animateHide, WinGuiWindowing_animateHide_args, ZEND_ACC_PUBLIC)
+	PHP_ME(WinGuiWindowing, getNext, WinGuiWindowing_getNext_args, ZEND_ACC_PUBLIC)
+	PHP_ME(WinGuiWindowing, getPrevious, WinGuiWindowing_getPrevious_args, ZEND_ACC_PUBLIC)
+	PHP_ME(WinGuiWindowing, hide, WinGuiWindowing_hide_args, ZEND_ACC_PUBLIC)
+	PHP_ME(WinGuiWindowing, show, WinGuiWindowing_show_args, ZEND_ACC_PUBLIC)
+	{NULL, NULL, NULL}
+};
+
+static zend_function_entry wingui_window_functions_xp[] = {
+	PHP_ME(WinGuiWindow, __construct, NULL, ZEND_ACC_PUBLIC | ZEND_ACC_CTOR)
+
+	PHP_ME(WinGuiWindow, allowSetForeground, WinGuiWindow_allowSetForeground_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+	PHP_ME(WinGuiWindow, bringToTop, WinGuiWindow_bringToTop_args, ZEND_ACC_PUBLIC)
+
+	PHP_ME(WinGuiWindow, tile, WinGuiWindow_tile_args, ZEND_ACC_PUBLIC)
 	PHP_ME(WinGuiWindow, getFromPoint, WinGuiWindow_getFromPoint_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
 
 	/* Window Class Stuff */
@@ -946,13 +1005,21 @@ zend_object_value wingui_window_object_create(zend_class_entry *ce TSRMLS_DC)
 PHP_MINIT_FUNCTION(wingui_window)
 {
 	zend_class_entry ce;
+	int builtin_function_length = 28;
 
 	memcpy(&wingui_window_object_handlers, &wingui_object_handlers,
 		sizeof wingui_window_object_handlers);
 	wingui_window_object_handlers.get_constructor = wingui_window_get_constructor;
 	//wingui_window_object_handlers.get_debug_info = winsystem_mutex_get_debug_info;
 
-	INIT_NS_CLASS_ENTRY(ce, PHP_WINGUI_NS, "Window", wingui_window_functions);
+	/* Functions available in Window vary by version - annoyingly */
+	if (EG(windows_version_info).dwMajorVersion < 5) {
+		INIT_NS_CLASS_ENTRY(ce, PHP_WINGUI_NS, "Window", wingui_window_functions_xp);
+	} else if (EG(windows_version_info).dwMajorVersion < 6) {
+		INIT_NS_CLASS_ENTRY(ce, PHP_WINGUI_NS, "Window", wingui_window_functions_vista);
+	} else {
+		INIT_NS_CLASS_ENTRY(ce, PHP_WINGUI_NS, "Window", wingui_window_functions_win7);
+	}
 	ce_wingui_window = zend_register_internal_class(&ce TSRMLS_CC);
 	ce_wingui_window->create_object = wingui_window_object_create;
 
@@ -1021,6 +1088,7 @@ PHP_MINIT_FUNCTION(wingui_window)
 
 	/* Callback map for properties */
 	zend_hash_init(&wingui_window_prop_handlers, 0, NULL, NULL, 1);
+	zend_hash_copy(&wingui_window_prop_handlers, &wingui_windowing_prop_handlers, NULL, NULL, sizeof(wingui_prop_handler));
 
 	return SUCCESS;
 }
