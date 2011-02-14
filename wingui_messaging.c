@@ -20,10 +20,7 @@
 #include "zend_exceptions.h"
 #include "implement_messaging.h"
 
-/* All the classes in this file */
 zend_class_entry *ce_wingui_messaging;
-
-/* the body of this is after stuff that uses it, but it is static and so here not in a header file */
 int wingui_messaging_connect_helper(HashTable* callback_table, int message_code, zval*** args, int argc, zend_fcall_info finfo, zend_fcall_info_cache fcache, int send_args, int send_return TSRMLS_DC);
 
 /* ----------------------------------------------------------------

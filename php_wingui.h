@@ -52,8 +52,19 @@ pre-xp versions of common controls to work, as well as new versions */
 /* generic object - for all objects */
 typedef struct _wingui_generic_object {
 	zend_object  std;
-	HashTable *prop_handler;
+	HashTable    *prop_handler;
+	zend_bool    is_constructed;
 } wingui_generic_object;
+
+/* message object */
+typedef struct _wingui_message_object {
+	zend_object   std;
+	HashTable    *prop_handler;
+	zend_bool     is_constructed;
+	MSG          *msg;
+	long          message;
+	zval        **params;
+} wingui_message_object;
 
 /* object for menu resources */
 typedef struct _wingui_menu_object {
@@ -130,16 +141,6 @@ typedef struct _wingui_window_object {
 	} data;
 } wingui_window_object;
 
-/* Some typedefs for stuff in the property callbacks */
-typedef int (*wingui_prop_read_int_t)(wingui_generic_object *object, zval *member, zval **retval TSRMLS_DC);
-typedef int (*wingui_prop_write_t)(wingui_generic_object *object, zval *member, zval *value TSRMLS_DC);
-
-/* Storage container for property callbacks */
-typedef struct _wingui_prop_handler {
-	wingui_prop_read_int_t read_func;
-	wingui_prop_write_t write_func;
-} wingui_prop_handler;
-
 /* Storage container for message callbacks */
 typedef struct _wingui_callback_t {
 	zend_fcall_info callback_info;
@@ -171,7 +172,7 @@ extern zend_class_entry *ce_wingui_resource_cursor;
 
 extern zend_class_entry *ce_wingui_messaging;
 extern zend_class_entry *ce_wingui_inputing;
-extern zend_class_entry *ce_wingui_windowing;
+
 
 extern zend_class_entry *ce_wingui_menu;
 extern zend_class_entry *ce_wingui_menuitem;
@@ -192,7 +193,7 @@ extern HashTable wingui_control_prop_handlers;
 ------------------------------------------------------------------*/
 #define PHP_WINGUI_NS ZEND_NS_NAME("Win", "Gui")
 
-#define PHP_WINGUI_END_MESSAGE WM_APP + 1
+#define PHP_WINGUI_STOP_LOOP WM_APP + 1
 
 #define REGISTER_WINGUI_MESSAGE_CONSTANT(ce, val, map, cb) \
 	zend_declare_class_constant_long((ce), #val, sizeof(#val) - 1, (val) TSRMLS_CC); \
@@ -205,6 +206,7 @@ BOOL wingui_is_win7 (TSRMLS_D);
 BOOL wingui_is_vista (TSRMLS_D);
 BOOL wingui_is_xp(TSRMLS_D);
 
+extern void wingui_object_construction_wrapper(INTERNAL_FUNCTION_PARAMETERS);
 extern void wingui_resource_construction_wrapper(INTERNAL_FUNCTION_PARAMETERS);
 
 LRESULT CALLBACK wingui_proc_handler(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
@@ -243,6 +245,33 @@ static inline void wingui_callback_extra_zvals_dtor(int argc, zval ***argv)
 }
 
 /* ----------------------------------------------------------------
+  Property Magic
+------------------------------------------------------------------*/
+
+/* Property read/write callbacks */
+typedef int (* wingui_prop_read_t) (wingui_generic_object *object, zval *member, zval **retval TSRMLS_DC);
+typedef int (* wingui_prop_write_t)(wingui_generic_object *object, zval *member, zval *value TSRMLS_DC);
+
+/* Container for read/write callback */
+typedef struct _wingui_prop_handler {
+	wingui_prop_read_t   read_func;
+	wingui_prop_write_t  write_func;
+} wingui_prop_handler;
+
+/* Registers the read and write handlers for a class's property */
+static inline void wingui_register_prop_handler(HashTable *prop_handlers, zend_class_entry *ce, char *prop_name, 
+												wingui_prop_read_t read_func, wingui_prop_write_t write_func TSRMLS_DC)
+{
+	wingui_prop_handler handler;
+
+	handler.read_func  = read_func;
+	handler.write_func = write_func;
+
+	zend_hash_add(prop_handlers, prop_name, strlen(prop_name) + 1, &handler, sizeof(wingui_prop_handler), NULL);
+	zend_declare_property_null(ce, prop_name, strlen(prop_name), ZEND_ACC_PUBLIC TSRMLS_CC);
+}
+
+/* ----------------------------------------------------------------
   Object Globals, lifecycle and static linking                 
 ------------------------------------------------------------------*/
 
@@ -262,6 +291,7 @@ PHP_MINIT_FUNCTION(wingui_inputing);
 PHP_MINIT_FUNCTION(wingui_windowing);
 
 /* Tools */
+PHP_MINIT_FUNCTION(wingui_message_queue);
 PHP_MINIT_FUNCTION(wingui_message);
 PHP_MINIT_FUNCTION(wingui_input);
 PHP_MINIT_FUNCTION(wingui_window);

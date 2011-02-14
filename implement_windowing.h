@@ -58,6 +58,13 @@ extern PHP_METHOD(WinGuiWindowing, getNext);
 extern PHP_METHOD(WinGuiWindowing, getPrevious);
 extern PHP_METHOD(WinGuiWindowing, hide);
 extern PHP_METHOD(WinGuiWindowing, show);
+
+/* All the classes in this file */
+extern zend_class_entry *ce_wingui_windowing;
+
+/* Notice this is not static, other things gonna use it */
+extern HashTable wingui_windowing_prop_handlers;
+
 #endif
 
 /*

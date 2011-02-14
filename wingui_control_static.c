@@ -16,22 +16,27 @@
   +----------------------------------------------------------------------+
 */
 
-/* $Id$ */
-
 #include "php_wingui.h"
+#include "php_winsystem_api.h"
 #include "zend_exceptions.h"
 
-ZEND_DECLARE_MODULE_GLOBALS(wingui);
+/* implements inputing, windowing, messaging and control */
+#include "implement_windowing.h"
+//#include "implement_inputing.h"
+#include "implement_messaging.h"
+#include "implement_control.h"
 
-/* All the classes in this file */
+/* Static controls - text, image and frame */
 zend_class_entry *ce_wingui_control_statictext;
 zend_class_entry *ce_wingui_control_staticimage;
 zend_class_entry *ce_wingui_control_staticframe;
 
-/* Custom Object Handler Items */
+/* class properties */
 HashTable wingui_control_statictext_prop_handlers;
 HashTable wingui_control_staticimage_prop_handlers;
 HashTable wingui_control_staticframe_prop_handlers;
+
+/* callbacks are shared */
 HashTable wingui_control_static_callback_map;
 
 /* C API used here */
@@ -42,15 +47,16 @@ void wingui_control_static_parse_options(zval *options, int *style TSRMLS_DC);
 void wingui_control_static_property_values(zval *object, int *style TSRMLS_DC);
 
 /* ----------------------------------------------------------------
-  Win\Gui\Control\Text Userland API                                                      
+  Win\Gui\Control\Text Userland API
 ------------------------------------------------------------------*/
+
 ZEND_BEGIN_ARG_INFO_EX(WinGuiControlText___construct_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 2)
 	ZEND_ARG_INFO(0, parent)
 	ZEND_ARG_INFO(0, text)
 	ZEND_ARG_INFO(0, options)
 ZEND_END_ARG_INFO()
 
-/* {{{ proto void Win\Gui\Text::__construct(Win\Gui\Window parent, string text[, array options])
+/* {{{ proto void Win\Gui\Text::__construct(Win\Gui\Window parent, string|object text[, array options])
      Create a new text area static control */
 PHP_METHOD(WinGuiControlText, __construct)
 {
@@ -80,14 +86,14 @@ PHP_METHOD(WinGuiControlText, __construct)
 }
 /* }}} */
 
-/* register Label methods */
+/* register text methods */
 static zend_function_entry wingui_control_statictext_functions[] = {
 	PHP_ME(WinGuiControlText, __construct, WinGuiControlText___construct_args, ZEND_ACC_PUBLIC | ZEND_ACC_CTOR)
 	{NULL, NULL, NULL}
 };
 
 /* ----------------------------------------------------------------
-  Win\Gui\Control\Image Userland API                                                      
+  Win\Gui\Control\Image Userland API
 ------------------------------------------------------------------*/
 ZEND_BEGIN_ARG_INFO_EX(WinGuiControlImage___construct_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 2)
 	ZEND_ARG_INFO(0, parent)
@@ -241,7 +247,7 @@ static zend_function_entry wingui_control_staticimage_functions[] = {
 };
 
 /* ----------------------------------------------------------------
-  Win\Gui\Control\Frame Userland API                                                      
+  Win\Gui\Control\Frame Userland API
 ------------------------------------------------------------------*/
 ZEND_BEGIN_ARG_INFO_EX(WinGuiControlFrame___construct_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 1)
 	ZEND_ARG_INFO(0, parent)
@@ -797,7 +803,7 @@ LRESULT wingui_control_static_messages_results(int msg, zval *return_value TSRML
 /* }}} */
 
 /* ----------------------------------------------------------------
-  Win\Gui\Control\Text/Frame/Image LifeCycle Functions                                                    
+  Win\Gui\Control\Text/Frame/Image LifeCycle Functions
 ------------------------------------------------------------------*/
 PHP_MINIT_FUNCTION(wingui_control_static)
 {
