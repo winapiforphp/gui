@@ -7,6 +7,10 @@ if(!extension_loaded('wingui')) die('skip - wingui extension not available');
 --FILE--
 <?php
 use Win\Gui\Window;
+use Win\Gui\ArgumentException;
+
+use Win\System\Unicode;
+use Win\System\CodePage;
 
 // window with all defaults
 $window = new Window;

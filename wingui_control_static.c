@@ -2,7 +2,7 @@
   +----------------------------------------------------------------------+
   | PHP Version 5                                                        |
   +----------------------------------------------------------------------+
-  | Copyright (c) 1997-2009 The PHP Group                                |
+  | Copyright (c) 1997-2011 The PHP Group                                |
   +----------------------------------------------------------------------+
   | This source file is subject to version 3.01 of the PHP license,      |
   | that is bundled with this package in the file LICENSE, and is        |
@@ -22,7 +22,7 @@
 
 /* implements inputing, windowing, messaging and control */
 #include "implement_windowing.h"
-#include "implement_inputing.h"
+//#include "implement_inputing.h"
 #include "implement_messaging.h"
 #include "implement_control.h"
 
@@ -56,7 +56,7 @@ ZEND_BEGIN_ARG_INFO_EX(WinGuiControlText___construct_args, ZEND_SEND_BY_VAL, ZEN
 	ZEND_ARG_INFO(0, options)
 ZEND_END_ARG_INFO()
 
-/* {{{ proto void Win\Gui\Text::__construct(Win\Gui\Window parent, string text[, array options])
+/* {{{ proto void Win\Gui\Text::__construct(Win\Gui\Window parent, string|object text[, array options])
      Create a new text area static control */
 PHP_METHOD(WinGuiControlText, __construct)
 {
@@ -86,14 +86,14 @@ PHP_METHOD(WinGuiControlText, __construct)
 }
 /* }}} */
 
-/* register Label methods */
+/* register text methods */
 static zend_function_entry wingui_control_statictext_functions[] = {
 	PHP_ME(WinGuiControlText, __construct, WinGuiControlText___construct_args, ZEND_ACC_PUBLIC | ZEND_ACC_CTOR)
 	{NULL, NULL, NULL}
 };
 
 /* ----------------------------------------------------------------
-  Win\Gui\Control\Image Userland API                                                      
+  Win\Gui\Control\Image Userland API
 ------------------------------------------------------------------*/
 ZEND_BEGIN_ARG_INFO_EX(WinGuiControlImage___construct_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 2)
 	ZEND_ARG_INFO(0, parent)
@@ -247,7 +247,7 @@ static zend_function_entry wingui_control_staticimage_functions[] = {
 };
 
 /* ----------------------------------------------------------------
-  Win\Gui\Control\Frame Userland API                                                      
+  Win\Gui\Control\Frame Userland API
 ------------------------------------------------------------------*/
 ZEND_BEGIN_ARG_INFO_EX(WinGuiControlFrame___construct_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 1)
 	ZEND_ARG_INFO(0, parent)

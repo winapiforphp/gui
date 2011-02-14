@@ -2,7 +2,7 @@
   +----------------------------------------------------------------------+
   | PHP Version 5                                                        |
   +----------------------------------------------------------------------+
-  | Copyright (c) 1997-2010 The PHP Group                                |
+  | Copyright (c) 1997-2011 The PHP Group                                |
   +----------------------------------------------------------------------+
   | This source file is subject to version 3.01 of the PHP license,      |
   | that is bundled with this package in the file LICENSE, and is        |
@@ -34,7 +34,7 @@ static zend_object_handlers wingui_window_object_handlers;
 static zend_function wingui_window_constructor_wrapper;
 
 /* ----------------------------------------------------------------
-  Win\Gui\Window Userland API                                      
+  Win\Gui\Window Userland API
 ------------------------------------------------------------------*/
 ZEND_BEGIN_ARG_INFO_EX(WinGuiWindow_allowSetForeground_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 0)
 	ZEND_ARG_INFO(0, process_id)
@@ -84,6 +84,11 @@ ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_INFO(WinGuiWindow_unregisterClass_args, ZEND_SEND_BY_VAL)
 	ZEND_ARG_INFO(0, name)
 ZEND_END_ARG_INFO()
+
+/**
+ * Window Class related methods
+ */
+
 
 /* {{{ proto void Win\Gui\Window::__construct([type, text, parent, ][array options])
      Create a new Window - types are TOPLEVEL (default), POPUP or CHILD
@@ -850,51 +855,7 @@ static zend_function_entry wingui_window_functions_xp[] = {
   Win\Gui\Window Custom Object magic                               
 ------------------------------------------------------------------*/
 
-/* {{{ wingui_window_construction_wrapper
-       wraps around the constructor to make sure parent::__construct is always called  */
-static void wingui_window_construction_wrapper(INTERNAL_FUNCTION_PARAMETERS) {
-	zval *this = getThis();
-	wingui_window_object *tobj;
-	zend_class_entry *this_ce;
-	zend_function *zf;
-	zend_fcall_info fci = {0};
-	zend_fcall_info_cache fci_cache = {0};
-	zval *retval_ptr = NULL;
-	unsigned i;
- 
-	tobj = zend_object_store_get_object(this TSRMLS_CC);
-	zf = zend_get_std_object_handlers()->get_constructor(this TSRMLS_CC);
-	this_ce = Z_OBJCE_P(this);
- 
-	fci.size = sizeof(fci);
-	fci.function_table = &this_ce->function_table;
-	fci.object_ptr = this;
-	/* fci.function_name = ; not necessary to bother */
-	fci.retval_ptr_ptr = &retval_ptr;
-	fci.param_count = ZEND_NUM_ARGS();
-	fci.params = emalloc(fci.param_count * sizeof *fci.params);
-	/* Or use _zend_get_parameters_array_ex instead of loop: */
-	for (i = 0; i < fci.param_count; i++) {
-		fci.params[i] = (zval **) (zend_vm_stack_top(TSRMLS_C) - 1 -
-			(fci.param_count - i));
-	}
-	fci.object_ptr = this;
-	fci.no_separation = 0;
- 
-	fci_cache.initialized = 1;
-	fci_cache.called_scope = EG(current_execute_data)->called_scope;
-	fci_cache.calling_scope = EG(current_execute_data)->current_scope;
-	fci_cache.function_handler = zf;
-	fci_cache.object_ptr = this;
- 
-	zend_call_function(&fci, &fci_cache TSRMLS_CC);
-	if (!EG(exception) && tobj->is_constructed == 0)
-		zend_throw_exception_ex(ce_wingui_exception, 0 TSRMLS_CC,
-			"parent::__construct() must be called in %s::__construct()", this_ce->name);
-	efree(fci.params);
-	zval_ptr_dtor(&retval_ptr);
-}
-/* }}} */
+
 
 /* {{{ wingui_window_get_constructor
        gets the constructor for the class  */
@@ -1035,7 +996,7 @@ PHP_MINIT_FUNCTION(wingui_window)
 	wingui_window_constructor_wrapper.common.arg_info = NULL;
 	wingui_window_constructor_wrapper.common.pass_rest_by_reference = 0;
 	wingui_window_constructor_wrapper.common.return_reference = 0;
-	wingui_window_constructor_wrapper.internal_function.handler = wingui_window_construction_wrapper;
+	wingui_window_constructor_wrapper.internal_function.handler = wingui_object_construction_wrapper;
 	wingui_window_constructor_wrapper.internal_function.module = EG(current_module);
 
 	/* Callback map for windows */
