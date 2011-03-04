@@ -981,7 +981,8 @@ PHP_MINIT_FUNCTION(wingui_window)
 	} else {
 		INIT_NS_CLASS_ENTRY(ce, PHP_WINGUI_NS, "Window", wingui_window_functions_win7);
 	}
-	ce_wingui_window = zend_register_internal_class(&ce TSRMLS_CC);
+	ce_wingui_window = zend_register_internal_class_ex(&ce, ce_wingdi_window, PHP_WINGDI_REGION_NS TSRMLS_CC);
+	//ce_wingui_window = zend_register_internal_class(&ce TSRMLS_CC);
 	ce_wingui_window->create_object = wingui_window_object_create;
 
 	//zend_class_implements(ce_wingui_window TSRMLS_CC, 3, ce_wingui_windowing,
