@@ -120,6 +120,7 @@ typedef struct _wingui_window_object {
 	zend_object  std;
 	zend_bool    is_constructed;
 	HashTable *prop_handler;
+	HWND window_handle;
 #ifdef ZTS
 	TSRMLS_D;
 #endif
@@ -133,7 +134,6 @@ typedef struct _wingui_window_object {
 	HashTable *registered_callbacks;
 	zval *object_zval;
 	int parent_is_temp;
-	HWND window_handle;
 	union data {
 		wingui_statusbar_data statusbar;
 		wingui_window_data window;
