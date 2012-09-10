@@ -18,8 +18,8 @@
 
 #include "php_wingui.h"
 #include "zend_exceptions.h"
-#include "php_winsystem_api.h"
-#include "implement_windowing.h"
+#include <php_winsystem_public.h>
+#include "windowing.h"
 
 /* All the classes in this file */
 zend_class_entry *ce_wingui_windowing;

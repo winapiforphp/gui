@@ -2,7 +2,7 @@
   +----------------------------------------------------------------------+
   | PHP Version 5                                                        |
   +----------------------------------------------------------------------+
-  | Copyright (c) 1997-2011 The PHP Group                                |
+  | Copyright (c) 1997-2012 The PHP Group                                |
   +----------------------------------------------------------------------+
   | This source file is subject to version 3.01 of the PHP license,      |
   | that is bundled with this package in the file LICENSE, and is        |
@@ -31,7 +31,7 @@ pre-xp versions of common controls to work, as well as new versions */
 #define ISOLATION_AWARE_ENABLED          1
 #define OEMRESOURCE                      1
 
-#include "wingui_version.h"
+#include "version.h"
 #include "php.h"
 #include <commctrl.h>
 

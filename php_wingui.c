@@ -2,7 +2,7 @@
   +----------------------------------------------------------------------+
   | PHP Version 5                                                        |
   +----------------------------------------------------------------------+
-  | Copyright (c) 1997-2011 The PHP Group                                |
+  | Copyright (c) 1997-2012 The PHP Group                                |
   +----------------------------------------------------------------------+
   | This source file is subject to version 3.01 of the PHP license,      |
   | that is bundled with this package in the file LICENSE, and is        |
@@ -12,7 +12,7 @@
   | obtain it through the world-wide-web, please send a note to          |
   | license@php.net so we can mail you a copy immediately.               |
   +----------------------------------------------------------------------+
-  | Author: Elizabeth Smith <auroraeosrose@php.net>                      |
+  | Author: Elizabeth Smith <auroraeosrose@gmail.com>                    |
   +----------------------------------------------------------------------+
 */
 
@@ -72,23 +72,23 @@ PHP_MINIT_FUNCTION(wingui)
 	InitCommonControlsEx(&icex);
 
 	/* Utility stuff */
-	PHP_MINIT(wingui_util)(INIT_FUNC_ARGS_PASSTHRU);
-	PHP_MINIT(wingui_object)(INIT_FUNC_ARGS_PASSTHRU);
+	//PHP_MINIT(wingui_util)(INIT_FUNC_ARGS_PASSTHRU);
+	//PHP_MINIT(wingui_object)(INIT_FUNC_ARGS_PASSTHRU);
 
 	/* Interfaces */
-	PHP_MINIT(wingui_messaging)(INIT_FUNC_ARGS_PASSTHRU);
+	//PHP_MINIT(wingui_messaging)(INIT_FUNC_ARGS_PASSTHRU);
 	//PHP_MINIT(wingui_inputing)(INIT_FUNC_ARGS_PASSTHRU);
 	//PHP_MINIT(wingui_windowing)(INIT_FUNC_ARGS_PASSTHRU);
 
 	/* Tools */
-	PHP_MINIT(wingui_message_queue)(INIT_FUNC_ARGS_PASSTHRU);
-	PHP_MINIT(wingui_message)(INIT_FUNC_ARGS_PASSTHRU);
+	//PHP_MINIT(wingui_message_queue)(INIT_FUNC_ARGS_PASSTHRU);
+	//PHP_MINIT(wingui_message)(INIT_FUNC_ARGS_PASSTHRU);
 	//PHP_MINIT(wingui_input)(INIT_FUNC_ARGS_PASSTHRU);
-	PHP_MINIT(wingui_window)(INIT_FUNC_ARGS_PASSTHRU);
+	//PHP_MINIT(wingui_window)(INIT_FUNC_ARGS_PASSTHRU);
 
 	/* Resources*/
-	PHP_MINIT(wingui_resource)(INIT_FUNC_ARGS_PASSTHRU);
-	PHP_MINIT(wingui_resource_cursor)(INIT_FUNC_ARGS_PASSTHRU);
+	//PHP_MINIT(wingui_resource)(INIT_FUNC_ARGS_PASSTHRU);
+	//PHP_MINIT(wingui_resource_cursor)(INIT_FUNC_ARGS_PASSTHRU);
 
 
 	//PHP_MINIT(wingui_resource_bitmap)(INIT_FUNC_ARGS_PASSTHRU);
@@ -112,7 +112,7 @@ PHP_MSHUTDOWN_FUNCTION(wingui)
 	//PHP_MSHUTDOWN(wingui_control_statusbar)(SHUTDOWN_FUNC_ARGS_PASSTHRU);
 	//PHP_MSHUTDOWN(wingui_control_listview)(SHUTDOWN_FUNC_ARGS_PASSTHRU);
 	//PHP_MSHUTDOWN(wingui_control)(SHUTDOWN_FUNC_ARGS_PASSTHRU);
-	PHP_MSHUTDOWN(wingui_window)(SHUTDOWN_FUNC_ARGS_PASSTHRU);
+	//PHP_MSHUTDOWN(wingui_window)(SHUTDOWN_FUNC_ARGS_PASSTHRU);
 	//PHP_MSHUTDOWN(wingui_inputing)(SHUTDOWN_FUNC_ARGS_PASSTHRU);
 
 	return SUCCESS;
