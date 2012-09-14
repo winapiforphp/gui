@@ -2,7 +2,7 @@
   +----------------------------------------------------------------------+
   | PHP Version 5                                                        |
   +----------------------------------------------------------------------+
-  | Copyright (c) 2007-2011 Elizabeth M. Smith, Sara Golemon, Tom Rogers |
+  | Copyright (c) 1997-2012 The PHP Group                                |
   +----------------------------------------------------------------------+
   | This source file is subject to version 3.01 of the PHP license,      |
   | that is bundled with this package in the file LICENSE, and is        |
@@ -12,7 +12,7 @@
   | obtain it through the world-wide-web, please send a note to          |
   | license@php.net so we can mail you a copy immediately.               |
   +----------------------------------------------------------------------+
-  | Author: Elizabeth M. Smith <auroraeosrose@php.net>                   |
+  | Author: Elizabeth M Smith <auroraeosrose@gmail.com>                  |
   +----------------------------------------------------------------------+
 */
 
@@ -41,6 +41,9 @@ ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_INFO_EX(WinGuiWindowing_getPrevious_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 0)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_INFO(WinGuiWindowing_isVisible_args, ZEND_SEND_BY_VAL)
+ZEND_END_ARG_INFO()
+
 ZEND_BEGIN_ARG_INFO_EX(WinGuiWindowing_hide_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 0)
 	ZEND_ARG_INFO(0, async)
 ZEND_END_ARG_INFO()
@@ -50,14 +53,28 @@ ZEND_BEGIN_ARG_INFO_EX(WinGuiWindowing_show_args, ZEND_SEND_BY_VAL, ZEND_RETURN_
 	ZEND_ARG_INFO(0, async)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_INFO(WinGuiWindowing_getSize_args, ZEND_SEND_BY_VAL)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO(WinGuiWindowing_getPos_args, ZEND_SEND_BY_VAL)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO(WinGuiWindowing_getText_args, ZEND_SEND_BY_VAL)
+ZEND_END_ARG_INFO()
+
 extern PHP_METHOD(WinGuiWindowing, adjustSize);
 extern PHP_METHOD(WinGuiWindowing, animateShow);
 extern PHP_METHOD(WinGuiWindowing, animateHide);
-
 extern PHP_METHOD(WinGuiWindowing, getNext);
 extern PHP_METHOD(WinGuiWindowing, getPrevious);
+
+
 extern PHP_METHOD(WinGuiWindowing, hide);
 extern PHP_METHOD(WinGuiWindowing, show);
+extern PHP_METHOD(WinGuiWindowing, isVisible);
+extern PHP_METHOD(WinGuiWindowing, getSize);
+extern PHP_METHOD(WinGuiWindowing, getPos);
+extern PHP_METHOD(WinGuiWindowing, getText);
 
 /* All the classes in this file */
 extern zend_class_entry *ce_wingui_windowing;

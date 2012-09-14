@@ -582,56 +582,6 @@ LRESULT wingui_window_messages_results(int msg, zval *return_value TSRMLS_DC)
 }
 /* }}} */
 
-/* ----------------------------------------------------------------
-  parameter parsing helpers for windows
-------------------------------------------------------------------*/
-int wingui_window_object_get_basics(HashTable *options, zend_bool *use_unicode, char ** name, wchar_t ** unicode,
-	long *x, long *y, long *width, long *height TSRMLS_DC)
-{
-	zval **value;
-
-	if (zend_hash_find(options, "title", sizeof("title"), (void **) &value) == SUCCESS) {
-		if (Z_TYPE_PP(value) == IS_OBJECT && instanceof_function(Z_OBJCE_PP(value), ce_winsystem_unicode TSRMLS_CC)) {
-			winsystem_unicode_object *unicode_object = (winsystem_unicode_object *)zend_object_store_get_object(*value TSRMLS_CC);
-			*use_unicode = TRUE;
-			*unicode = unicode_object->unicode_string;
-		} else if (SUCCESS == winsystem_juggle_type(*value, IS_STRING TSRMLS_CC)) {
-			*name = Z_STRVAL_PP(value);
-		} else {
-			return FAILURE;
-		}
-	}
-	if (zend_hash_find(options, "x", sizeof("x"), (void **) &value) == SUCCESS) {
-		if (SUCCESS == winsystem_juggle_type(*value, IS_LONG TSRMLS_CC)) {
-			*x = Z_LVAL_PP(value);
-		} else {
-			return FAILURE;
-		}
-	}
-	if (zend_hash_find(options, "y", sizeof("y"), (void **) &value) == SUCCESS) {
-		if (SUCCESS == winsystem_juggle_type(*value, IS_LONG TSRMLS_CC)) {
-			*y = Z_LVAL_PP(value);
-		} else {
-			return FAILURE;
-		}
-	}
-	if (zend_hash_find(options, "width", sizeof("width"), (void **) &value) == SUCCESS) {
-		if (SUCCESS == winsystem_juggle_type(*value, IS_LONG TSRMLS_CC)) {
-			*width = Z_LVAL_PP(value);
-		} else {
-			return FAILURE;
-		}
-	}
-	if (zend_hash_find(options, "height", sizeof("height"), (void **) &value) == SUCCESS) {
-		if (SUCCESS == winsystem_juggle_type(*value, IS_LONG TSRMLS_CC)) {
-			*height = Z_LVAL_PP(value);
-		} else {
-			return FAILURE;
-		}
-	}
-	return SUCCESS;
-}
-
 int wingui_window_object_get_styles(HashTable *options, long *style, long *extrastyle TSRMLS_DC) {
 		zval **value;
 

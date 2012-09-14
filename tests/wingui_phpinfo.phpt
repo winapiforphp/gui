@@ -2,22 +2,14 @@
 phpinfo specific to wingui
 --SKIPIF--
 <?php
-if(!extension_loaded('wingui')) die('skip - wingui extension not available');
+include __DIR__ . '/skipif.inc';
 ?>
 --FILE--
 <?php
-ob_start();
-phpinfo(INFO_MODULES);
-$data = ob_get_clean();
-$data = explode("\n\n", $data);
-foreach($data as $key => $info) {
-    if ($info === 'wingui') {
-        break;
-    }
-}
-$data = $data[$key + 1];
-var_dump($data);
+$ext = new ReflectionExtension('wingui');
+$ext->info();
 ?>
 --EXPECTF--
-string(%d) "Win32 Gui => enabled
-Version => %s
+wingui
+
+Version => %d.%d.%d%s

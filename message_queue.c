@@ -2,7 +2,7 @@
   +----------------------------------------------------------------------+
   | PHP Version 5                                                        |
   +----------------------------------------------------------------------+
-  | Copyright (c) 1997-2011 The PHP Group                                |
+  | Copyright (c) 1997-2012 The PHP Group                                |
   +----------------------------------------------------------------------+
   | This source file is subject to version 3.01 of the PHP license,      |
   | that is bundled with this package in the file LICENSE, and is        |
@@ -12,12 +12,11 @@
   | obtain it through the world-wide-web, please send a note to          |
   | license@php.net so we can mail you a copy immediately.               |
   +----------------------------------------------------------------------+
-  | Author: Elizabeth Smith <auroraeosrose@php.net>                      |
+  | Author: Elizabeth M Smith <auroraeosrose@gmail.com>                  |
   +----------------------------------------------------------------------+
 */
 
 #include "php_wingui.h"
-#include "zend_exceptions.h"
 
 zend_class_entry *ce_wingui_message_queue;
 
@@ -28,24 +27,6 @@ ZEND_BEGIN_ARG_INFO_EX(WinGuiMessageQueue_get_args, ZEND_SEND_BY_VAL, ZEND_RETUR
 	ZEND_ARG_INFO(0, window)
 	ZEND_ARG_INFO(0, filtermin)
 	ZEND_ARG_INFO(0, filtermax)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO(WinGuiMessageQueue_getExtraInfo_args, ZEND_SEND_BY_VAL)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO(WinGuiMessageQueue_getInputState_args, ZEND_SEND_BY_VAL)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO(WinGuiMessageQueue_getPos_args, ZEND_SEND_BY_VAL)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO(WinGuiMessageQueue_getTime_args, ZEND_SEND_BY_VAL)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO(WinGuiMessageQueue_getStatus_args, ZEND_SEND_BY_VAL)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO(WinGuiMessageQueue_inSend_args, ZEND_SEND_BY_VAL)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(WinGuiMessageQueue_peek_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 1)
@@ -67,32 +48,21 @@ ZEND_BEGIN_ARG_INFO(WinGuiMessageQueue_setExtraInfo_args, ZEND_SEND_BY_VAL)
 	ZEND_ARG_INFO(0, value)
 ZEND_END_ARG_INFO()
 
-ZEND_BEGIN_ARG_INFO(WinGuiMessageQueue_wait_args, ZEND_SEND_BY_VAL)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO(WinGuiMessageQueue_start_args, ZEND_SEND_BY_VAL)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO(WinGuiMessageQueue_stop_args, ZEND_SEND_BY_VAL)
-ZEND_END_ARG_INFO()
-
-/* {{{  proto bool Win\Gui\Message\Queue::getInputState(void)
-        are there mousebutton or keyboard messages in a thread's queue */
+/* {{{  proto bool Queue::getInputState(void)
+                   are there mousebutton or keyboard messages in a thread's queue */
 PHP_METHOD(WinGuiMessageQueue, getInputState)
 {
-	zend_error_handling error_handling;
-
-	zend_replace_error_handling(EH_THROW, ce_wingui_argexception, &error_handling TSRMLS_CC);
-	if (zend_parse_parameters_none() == FAILURE) {
+	PHP_WINGUI_EXCEPTIONS
+	if (FAILURE == zend_parse_parameters_none()) {
 		return;
 	}
-	zend_restore_error_handling(&error_handling TSRMLS_CC);
+	PHP_WINGUI_RESTORE_ERRORS
 
 	RETURN_BOOL(GetInputState());
 }
 /* }}} */
 
-/* {{{  proto bool Win\Gui\Message\Queue::get(bool window[, int filtermin, int filtermax])
+/* {{{  proto bool Queue::get(bool window[, int filtermin, int filtermax])
         retrieves a message from the calling thread's message queue.
         retrieves window and all other messages if window is set to true, otherwise retrieves only
         messages not attached to a window
@@ -142,18 +112,17 @@ PHP_METHOD(WinGuiMessageQueue, get)
 }
 /* }}} */
 
-/* {{{  proto mixed Win\Gui\Message\Queue::getExtraInfo()
-		gets the extra message information, use setExtraInfo to set it */
+/* {{{  proto mixed Queue::getExtraInfo()
+		            gets the extra message information, use setExtraInfo to set it */
 PHP_METHOD(WinGuiMessageQueue, getExtraInfo)
 {
-	zend_error_handling error_handling;
 	LPARAM data;
 
-	zend_replace_error_handling(EH_THROW, ce_wingui_argexception, &error_handling TSRMLS_CC);
-	if (zend_parse_parameters_none() == FAILURE) {
+	PHP_WINGUI_EXCEPTIONS
+	if (FAILURE == zend_parse_parameters_none()) {
 		return;
 	}
-	zend_restore_error_handling(&error_handling TSRMLS_CC);
+	PHP_WINGUI_RESTORE_ERRORS
 
 	data = GetMessageExtraInfo();
 
@@ -166,41 +135,38 @@ PHP_METHOD(WinGuiMessageQueue, getExtraInfo)
 }
 /* }}} */
 
-/* {{{ proto array Win\Gui\Message\Queue::getPos()
-     returns an array of x, y coordinates of cursor of last message */
+/* {{{ proto object Queue::getPos()
+                   returns an object with x, y coordinates of cursor of last message */
 PHP_METHOD(WinGuiMessageQueue, getPos)
 {
 	DWORD position;
 	POINTS points;
-	zend_error_handling error_handling;
 
-	zend_replace_error_handling(EH_THROW, ce_wingui_argexception, &error_handling TSRMLS_CC);
-	if (zend_parse_parameters_none() == FAILURE) {
+	PHP_WINGUI_EXCEPTIONS
+	if (FAILURE == zend_parse_parameters_none()) {
 		return;
 	}
-	zend_restore_error_handling(&error_handling TSRMLS_CC);
+	PHP_WINGUI_RESTORE_ERRORS
 
 	position = GetMessagePos();
 	points = MAKEPOINTS(position);
 
-	array_init(return_value);
-	add_next_index_long(return_value, points.x);
-	add_next_index_long(return_value, points.y);
+	object_init(return_value);
+	add_property_long(return_value, "x", (long) points.x);
+	add_property_long(return_value, "y", (long) points.y);
 }
 /* }}} */
 
-/* {{{ proto int Win\Gui\Message\Queue::getTime()
-     elapsed time, in milliseconds, from the time the system was started to the
-	 time the message was placed in the queue */
+/* {{{ proto int Queue::getTime()
+                 elapsed time, in milliseconds, from the time the system was started to the
+	             time the message was placed in the queue */
 PHP_METHOD(WinGuiMessageQueue, getTime)
 {
-	zend_error_handling error_handling;
-
-	zend_replace_error_handling(EH_THROW, ce_wingui_argexception, &error_handling TSRMLS_CC);
-	if (zend_parse_parameters_none() == FAILURE) {
+	PHP_WINGUI_EXCEPTIONS
+	if (FAILURE == zend_parse_parameters_none()) {
 		return;
 	}
-	zend_restore_error_handling(&error_handling TSRMLS_CC);
+	PHP_WINGUI_RESTORE_ERRORS
 
 	RETURN_LONG(GetMessageTime());
 }
@@ -212,15 +178,15 @@ PHP_METHOD(WinGuiMessageQueue, getStatus)
 {
 	DWORD status;
 	UINT flags;
-	zend_error_handling error_handling;
 
-	zend_replace_error_handling(EH_THROW, ce_wingui_argexception, &error_handling TSRMLS_CC);
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &flags) == FAILURE) {
+	PHP_WINGUI_EXCEPTIONS
+	if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &flags)) {
 		return;
 	}
-	zend_restore_error_handling(&error_handling TSRMLS_CC);
+	PHP_WINGUI_RESTORE_ERRORS
 
 	status = GetQueueStatus(flags);
+	// TODO: make it do a status enum?
 
 	array_init(return_value);
 	add_next_index_long(return_value, HIWORD(status));
@@ -228,18 +194,16 @@ PHP_METHOD(WinGuiMessageQueue, getStatus)
 }
 /* }}} */
 
-/* {{{ proto int Win\Gui\Message\Queue::inSend()
-     determines whether the current window procedure
-     is processing a message that was sent from another thread */
+/* {{{ proto int Queue::inSend()
+                 determines whether the current window procedure
+                 is processing a message that was sent from another thread */
 PHP_METHOD(WinGuiMessageQueue, inSend)
 {
-	zend_error_handling error_handling;
-
-	zend_replace_error_handling(EH_THROW, ce_wingui_argexception, &error_handling TSRMLS_CC);
-	if (zend_parse_parameters_none() == FAILURE) {
+	PHP_WINGUI_EXCEPTIONS
+	if (FAILURE == zend_parse_parameters_none()) {
 		return;
 	}
-	zend_restore_error_handling(&error_handling TSRMLS_CC);
+	PHP_WINGUI_RESTORE_ERRORS
 
 	RETURN_LONG(InSendMessageEx(NULL));
 }
@@ -294,36 +258,33 @@ PHP_METHOD(WinGuiMessageQueue, peek)
 /* }}} */
 
 /* {{{ proto void Win\Gui\Message\Queue::postQuit([int exitcode])
-     stop message pump and destroy all active windows */
+                  stop message pump and destroy all active windows */
 PHP_METHOD(WinGuiMessageQueue, postQuit)
 {
 	int exit = 0;
-	zend_error_handling error_handling;
 
-	zend_replace_error_handling(EH_THROW, ce_wingui_argexception, &error_handling TSRMLS_CC);
-
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|l", &exit) == FAILURE) {
+	PHP_WINGUI_EXCEPTIONS
+	if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|l", &exit)) {
 		return;
 	}
-	zend_restore_error_handling(&error_handling TSRMLS_CC);
+	PHP_WINGUI_RESTORE_ERRORS
 
 	PostQuitMessage(exit);
 }
 /* }}} */
 
-/* {{{  proto void Win\Gui\Message\Queue::setExtraInfo()
-        sets the extra message information, use getExtraInfo to retrieve it */
+/* {{{  proto void Queue::setExtraInfo()
+                   sets the extra message information, use getExtraInfo to retrieve it */
 PHP_METHOD(WinGuiMessageQueue, setExtraInfo)
 {
-	zend_error_handling error_handling;
 	zval *data_zval;
 	LPARAM data;
 
-	zend_replace_error_handling(EH_THROW, ce_wingui_argexception, &error_handling TSRMLS_CC);
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &data_zval) == FAILURE) {
+	PHP_WINGUI_EXCEPTIONS
+	if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &data_zval)) {
 		return;
 	}
-	zend_restore_error_handling(&error_handling TSRMLS_CC);
+	PHP_WINGUI_RESTORE_ERRORS
 
 	/* if we have data stored right now, we must deref , then ref the new */
 	data = GetMessageExtraInfo();
@@ -336,36 +297,33 @@ PHP_METHOD(WinGuiMessageQueue, setExtraInfo)
 }
 /* }}} */
 
-/* {{{  proto bool Win\Gui\Message\Queue::wait()
-        wait for a message to be put in the queue */
+/* {{{  proto bool Queue::wait()
+                   wait for a message to be put in the queue */
 PHP_METHOD(WinGuiMessageQueue, wait)
 {
-	zend_error_handling error_handling;
-
-	zend_replace_error_handling(EH_THROW, ce_wingui_argexception, &error_handling TSRMLS_CC);
-	if (zend_parse_parameters_none() == FAILURE) {
+	PHP_WINGUI_EXCEPTIONS
+	if (FAILURE == zend_parse_parameters_none()) {
 		return;
 	}
-	zend_restore_error_handling(&error_handling TSRMLS_CC);
+	PHP_WINGUI_RESTORE_ERRORS
 
 	RETURN_BOOL(WaitMessage());
 }
 /* }}} */
 
-/* {{{ proto long Win\Gui\Message\Queue::start()
-     Begins a standard messing loop for UI applications */
+/* {{{ proto long Queue::start()
+                  Begins a standard messing loop for UI applications */
 PHP_METHOD(WinGuiMessageQueue, start)
 {
 	HRESULT result;
 	HINSTANCE hinstance;
 	MSG msg;
-	zend_error_handling error_handling;
 
-	zend_replace_error_handling(EH_THROW, ce_wingui_argexception, &error_handling TSRMLS_CC);
-	if (zend_parse_parameters_none() == FAILURE) {
+	PHP_WINGUI_EXCEPTIONS
+	if (FAILURE == zend_parse_parameters_none()) {
 		return;
 	}
-	zend_restore_error_handling(&error_handling TSRMLS_CC);
+	PHP_WINGUI_RESTORE_ERRORS
 
 	hinstance = GetModuleHandle(NULL);
 
@@ -405,17 +363,15 @@ PHP_METHOD(WinGuiMessageQueue, start)
 }
  /* }}} */
 
-/* {{{ proto void Win\Gui\Message\Queue::stop()
-     Ends the standard Messaging loop for UI applications */
+/* {{{ proto void Queue::stop()
+                  Ends the standard Messaging loop for UI applications */
 PHP_METHOD(WinGuiMessageQueue, stop)
 {
-	zend_error_handling error_handling;
-
-	zend_replace_error_handling(EH_THROW, ce_wingui_argexception, &error_handling TSRMLS_CC);
-	if (zend_parse_parameters_none() == FAILURE) {
+	PHP_WINGUI_EXCEPTIONS
+	if (FAILURE == zend_parse_parameters_none()) {
 		return;
 	}
-	zend_restore_error_handling(&error_handling TSRMLS_CC);
+	PHP_WINGUI_RESTORE_ERRORS
 
 	/* Force the messaging pump */
 	PostMessage(NULL, PHP_WINGUI_STOP_LOOP, (WPARAM) NULL, (LPARAM) NULL);
@@ -425,18 +381,18 @@ PHP_METHOD(WinGuiMessageQueue, stop)
 /* register Messaging methods */
 static zend_function_entry wingui_message_queue_functions[] = {
 	PHP_ME(WinGuiMessageQueue, get, WinGuiMessageQueue_get_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-	PHP_ME(WinGuiMessageQueue, getExtraInfo, WinGuiMessageQueue_getExtraInfo_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-	PHP_ME(WinGuiMessageQueue, getInputState, WinGuiMessageQueue_getInputState_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-	PHP_ME(WinGuiMessageQueue, getPos, WinGuiMessageQueue_getPos_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-	PHP_ME(WinGuiMessageQueue, getTime, WinGuiMessageQueue_getTime_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-	PHP_ME(WinGuiMessageQueue, getStatus, WinGuiMessageQueue_getStatus_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-	PHP_ME(WinGuiMessageQueue, inSend, WinGuiMessageQueue_inSend_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+	PHP_ME(WinGuiMessageQueue, getExtraInfo, NULL, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+	PHP_ME(WinGuiMessageQueue, getInputState, NULL, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+	PHP_ME(WinGuiMessageQueue, getPos, NULL, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+	PHP_ME(WinGuiMessageQueue, getTime, NULL, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+	PHP_ME(WinGuiMessageQueue, getStatus, NULL, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+	PHP_ME(WinGuiMessageQueue, inSend, NULL, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
 	PHP_ME(WinGuiMessageQueue, peek, WinGuiMessageQueue_peek_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
 	PHP_ME(WinGuiMessageQueue, postQuit, WinGuiMessageQueue_postQuit_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
 	PHP_ME(WinGuiMessageQueue, setExtraInfo, WinGuiMessageQueue_setExtraInfo_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-	PHP_ME(WinGuiMessageQueue, wait, WinGuiMessageQueue_wait_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-	PHP_ME(WinGuiMessageQueue, start, WinGuiMessageQueue_start_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-	PHP_ME(WinGuiMessageQueue, stop, WinGuiMessageQueue_stop_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+	PHP_ME(WinGuiMessageQueue, wait, NULL, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+	PHP_ME(WinGuiMessageQueue, start, NULL, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+	PHP_ME(WinGuiMessageQueue, stop, NULL, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
 	{NULL, NULL, NULL}
 };
 

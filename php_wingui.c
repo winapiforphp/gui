@@ -17,44 +17,6 @@
 */
 
 #include "php_wingui.h"
-#include "ext/standard/info.h"
-
-/* ----------------------------------------------------------------
-  Win\Gui C API                                                    
-------------------------------------------------------------------*/
-/* {{{ wingui_is_win7 - are we running on windows7 or higher (some things won't work unless we are) */
-BOOL wingui_is_win7 (TSRMLS_D) 
-{
-	if (EG(windows_version_info).dwMajorVersion < 7 && EG(windows_version_info).dwMinorVersion < 1) {
-		return FALSE;
-	} else {
-		return TRUE;
-	}
-}
-/* }}} */
-
-
-/* {{{ wingui_is_vista - are we running on vista or higher (some things won't work unless we are) */
-BOOL wingui_is_vista (TSRMLS_D) 
-{
-	if (EG(windows_version_info).dwMajorVersion < 6) {
-		return FALSE;
-	} else {
-		return TRUE;
-	}
-}
-/* }}} */
-
-/* {{{ wingui_is_xp - are we running on xp or higher (some things won't work unless we are) */
-BOOL wingui_is_xp (TSRMLS_D) 
-{
-	if (EG(windows_version_info).dwMajorVersion < 5) {
-		return FALSE;
-	} else {
-		return TRUE;
-	}
-}
-/* }}} */
 
 /* ----------------------------------------------------------------
   Win\Gui LifeCycle Functions                                     
@@ -71,20 +33,16 @@ PHP_MINIT_FUNCTION(wingui)
 	InitCommonControls();
 	InitCommonControlsEx(&icex);
 
-	/* Utility stuff */
-	//PHP_MINIT(wingui_util)(INIT_FUNC_ARGS_PASSTHRU);
-	//PHP_MINIT(wingui_object)(INIT_FUNC_ARGS_PASSTHRU);
-
 	/* Interfaces */
 	//PHP_MINIT(wingui_messaging)(INIT_FUNC_ARGS_PASSTHRU);
 	//PHP_MINIT(wingui_inputing)(INIT_FUNC_ARGS_PASSTHRU);
-	//PHP_MINIT(wingui_windowing)(INIT_FUNC_ARGS_PASSTHRU);
+	PHP_MINIT(wingui_windowing)(INIT_FUNC_ARGS_PASSTHRU);
 
 	/* Tools */
-	//PHP_MINIT(wingui_message_queue)(INIT_FUNC_ARGS_PASSTHRU);
+	PHP_MINIT(wingui_message_queue)(INIT_FUNC_ARGS_PASSTHRU);
 	//PHP_MINIT(wingui_message)(INIT_FUNC_ARGS_PASSTHRU);
 	//PHP_MINIT(wingui_input)(INIT_FUNC_ARGS_PASSTHRU);
-	//PHP_MINIT(wingui_window)(INIT_FUNC_ARGS_PASSTHRU);
+	PHP_MINIT(wingui_window)(INIT_FUNC_ARGS_PASSTHRU);
 
 	/* Resources*/
 	//PHP_MINIT(wingui_resource)(INIT_FUNC_ARGS_PASSTHRU);
@@ -112,83 +70,10 @@ PHP_MSHUTDOWN_FUNCTION(wingui)
 	//PHP_MSHUTDOWN(wingui_control_statusbar)(SHUTDOWN_FUNC_ARGS_PASSTHRU);
 	//PHP_MSHUTDOWN(wingui_control_listview)(SHUTDOWN_FUNC_ARGS_PASSTHRU);
 	//PHP_MSHUTDOWN(wingui_control)(SHUTDOWN_FUNC_ARGS_PASSTHRU);
-	//PHP_MSHUTDOWN(wingui_window)(SHUTDOWN_FUNC_ARGS_PASSTHRU);
+	PHP_MSHUTDOWN(wingui_window)(SHUTDOWN_FUNC_ARGS_PASSTHRU);
 	//PHP_MSHUTDOWN(wingui_inputing)(SHUTDOWN_FUNC_ARGS_PASSTHRU);
 
 	return SUCCESS;
-}
-
-/* register a default "class" for windows */
-PHP_RINIT_FUNCTION(wingui)
-{
-	/* Do this twice, once for a unicode window, once without */
-	WNDCLASSEX wcx = { 0 };
-	WNDCLASSEXW wcxw = { 0 };
-	ATOM worked;
-
-	/* these are default values that can be overridden */
-	wcx.cbSize = sizeof(wcx);
-	wcxw.cbSize = sizeof(wcxw);
-	wcx.cbClsExtra = 0;
-	wcxw.cbClsExtra = 0;
-	wcx.cbWndExtra = sizeof(wingui_window_object *);
-	wcxw.cbWndExtra = sizeof(wingui_window_object *);
-	wcx.hInstance = GetModuleHandleW(NULL);
-	wcxw.hInstance = GetModuleHandle(NULL);
-	wcx.lpfnWndProc = wingui_proc_handler;
-	wcxw.lpfnWndProc = wingui_proc_handler;
-	wcx.lpszMenuName =  NULL;
-	wcxw.lpszMenuName =  NULL;
-	wcx.lpszClassName = "php_wingui_window";
-	wcxw.lpszClassName = L"php_wingui_window_unicode";
-	wcx.style = 0;
-	wcxw.style = 0;
-	wcx.hIcon = NULL;
-	wcxw.hIcon = NULL;
-	wcx.hCursor = LoadCursor(NULL, IDC_ARROW);
-	wcxw.hCursor = LoadCursor(NULL, IDC_ARROW);
-	wcx.hbrBackground = GetSysColorBrush(COLOR_WINDOW);
-	wcxw.hbrBackground = GetSysColorBrush(COLOR_WINDOW);
-	wcx.hIconSm = NULL;
-	wcxw.hIconSm = NULL;
-
-	worked = RegisterClassExA(&wcx);
-
-	if (worked == 0) {
-		return FAILURE;
-	} else {
-		worked = RegisterClassExW(&wcxw);
-		if (worked == 0) {
-			return FAILURE;
-		}
-		return SUCCESS;
-	}
-}
-
-/* Unregister our class */
-PHP_RSHUTDOWN_FUNCTION(wingui)
-{
-	BOOL worked;
-
-	worked = UnregisterClassA("php_wingui_window", GetModuleHandle(NULL));
-	if (worked == 0) {
-		return FAILURE;
-	} else {
-		worked = UnregisterClassW(L"php_wingui_window_unicode", GetModuleHandleW(NULL));
-		if (worked == 0) {
-			return FAILURE;
-		}
-		return SUCCESS;
-	}
-}
-
-/* Basic information */
-PHP_MINFO_FUNCTION(wingui)
-{
-	php_info_print_table_start();
-	php_info_print_table_row(2, "Win32 Gui", "enabled");
-	php_info_print_table_row(2, "Version", PHP_WINGUI_VERSION);
-	php_info_print_table_end();
 }
 
 /* Requires the win\system for unicode/exceptions
@@ -208,9 +93,9 @@ zend_module_entry wingui_module_entry = {
 	NULL,
 	PHP_MINIT(wingui),
 	PHP_MSHUTDOWN(wingui),
-	PHP_RINIT(wingui),
-	PHP_RSHUTDOWN(wingui),
-	PHP_MINFO(wingui),
+	NULL,
+	NULL,
+	NULL,
 	PHP_WINGUI_VERSION,
 	STANDARD_MODULE_PROPERTIES
 };

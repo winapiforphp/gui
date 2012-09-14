@@ -1,5 +1,15 @@
 <?php
 use Win\Gui\Window;
+use Win\System\Unicode;
+use Win\System\Codepage;
+
+$window = new Window(['text' => 'Control Examples', 'classname' => 'php_wingui_window_ansi']);
+echo $window->getText();
+
+
+//Reflection::export(new ReflectionExtension('wingui'));
+
+/*
 use Win\Gui\Menu;
 use Win\Gui\MenuItem;
 use Win\Gui\Resource\Image;
@@ -52,5 +62,4 @@ $window->show();
 $window->connectSimple(Window::WM_DESTROY, array('Win\Gui\Message', 'postQuit'));
 
 // start the main loop
-Win\Gui\Message::run();
-?>
+Win\Gui\Message::run(); */

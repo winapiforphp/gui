@@ -2,7 +2,7 @@
 phpversion('wingui') version
 --SKIPIF--
 <?php
-if(!extension_loaded('wingui')) die('skip - wingui extension not available');
+include __DIR__ . '/skipif.inc';
 ?>
 --FILE--
 <?php

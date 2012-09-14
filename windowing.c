@@ -2,7 +2,7 @@
   +----------------------------------------------------------------------+
   | PHP Version 5                                                        |
   +----------------------------------------------------------------------+
-  | Copyright (c) 1997-2011 The PHP Group                                |
+  | Copyright (c) 1997-2012 The PHP Group                                |
   +----------------------------------------------------------------------+
   | This source file is subject to version 3.01 of the PHP license,      |
   | that is bundled with this package in the file LICENSE, and is        |
@@ -12,13 +12,11 @@
   | obtain it through the world-wide-web, please send a note to          |
   | license@php.net so we can mail you a copy immediately.               |
   +----------------------------------------------------------------------+
-  | Author: Elizabeth Smith <auroraeosrose@php.net>                      |
+  | Author: Elizabeth M Smith <auroraeosrose@gmail.com>                  |
   +----------------------------------------------------------------------+
 */
 
 #include "php_wingui.h"
-#include "zend_exceptions.h"
-#include <php_winsystem_public.h>
 #include "windowing.h"
 
 /* All the classes in this file */
@@ -33,7 +31,7 @@ HashTable wingui_windowing_prop_handlers;
 
 /* {{{ proto array Win\Gui\Windowing->adjustSize(width, height)
        calculates the required size of the window rectangle, based on the desired client-rectangle size
-       returns array(width, height) for window size */
+       returns array(width, height) for window size 
 PHP_METHOD(WinGuiWindowing, adjustSize)
 {
 	zend_error_handling error_handling;
@@ -48,24 +46,24 @@ PHP_METHOD(WinGuiWindowing, adjustSize)
 	}
 	zend_restore_error_handling(&error_handling TSRMLS_CC);
 
-	/* Populate our rect */
+	/* Populate our rect 
 	rect.top = 0;
 	rect.left = 0;
 	rect.bottom = height;
 	rect.right = width;
 
-	/* grab additional values from current window for styles, extrastyles and menus, needed for proper calculation */ 
+	/* grab additional values from current window for styles, extrastyles and menus, needed for proper calculation 
 	style = GetWindowLongPtr(window_object->window_handle, GWL_STYLE);
 	ex_style = GetWindowLongPtr(window_object->window_handle, GWL_EXSTYLE);
 	if (GetMenu(window_object->window_handle) != NULL) {
 		menu = TRUE;
 	}
 
-	/* If call works properly, return array, otherwise throw exception */
+	/* If call works properly, return array, otherwise throw exception 
 	if(AdjustWindowRectEx(&rect, style, menu, ex_style)) {
 		array_init(return_value);
 
-		/* add scrollbars afterward because AdjustWindowRectEx doesn't include them */
+		/* add scrollbars afterward because AdjustWindowRectEx doesn't include them 
 		if(style & WS_VSCROLL) {
 			rect.right += GetSystemMetrics(SM_CXVSCROLL);
 		}
@@ -83,7 +81,7 @@ PHP_METHOD(WinGuiWindowing, adjustSize)
 /* }}} */
 
 /* {{{ proto bool Win\Gui\Windowing->animateShow([int time, int flags, bool activate])
-       Identical to Win\Gui\Windowing->show except it animates the display of the window */
+       Identical to Win\Gui\Windowing->show except it animates the display of the window 
 PHP_METHOD(WinGuiWindowing, animateShow)
 {
 	zend_error_handling error_handling;
@@ -106,7 +104,7 @@ PHP_METHOD(WinGuiWindowing, animateShow)
 /* }}} */
 
 /* {{{ proto bool Win\Gui\Windowing->animateHide([int time, int flags])
-       Identical to  Win\Gui\Windowing->hide except it animates the hiding of the window */
+       Identical to  Win\Gui\Windowing->hide except it animates the hiding of the window 
 PHP_METHOD(WinGuiWindowing, animateHide)
 {
 	zend_error_handling error_handling;
@@ -159,7 +157,7 @@ PHP_METHOD(WinGuiWindowing, getClientSize)
 /* }}} */
 
 /* {{{ proto object Win\Gui\Windowing->getNext()
-       Gets next window in Z order */
+       Gets next window in Z order 
 PHP_METHOD(WinGuiWindowing, getNext)
 {
 	HWND handle;
@@ -181,7 +179,7 @@ PHP_METHOD(WinGuiWindowing, getNext)
 
 	next_object = (wingui_window_object *)GetWindowLongPtr(handle, GWLP_USERDATA);
 	if (next_object == NULL || next_object->object_zval == NULL) {
-		/* TODO some day: get the window class get the appropriate CE besed on the class returned */
+		/* TODO some day: get the window class get the appropriate CE besed on the class returned 
 		zend_throw_exception(ce_wingui_exception, "Win\\Gui\\Windowing::getNext() could not retrieve the requested window - it may have not been created with wingui", 0 TSRMLS_CC);
 		return;
 	} else {
@@ -195,7 +193,7 @@ PHP_METHOD(WinGuiWindowing, getNext)
 /* }}} */
 
 /* {{{ proto void Win\Gui\Windowing->getPrevious()
-        Gets prev window in Z order */
+        Gets prev window in Z order 
 PHP_METHOD(WinGuiWindowing, getPrevious)
 {
 	HWND handle;
@@ -217,7 +215,7 @@ PHP_METHOD(WinGuiWindowing, getPrevious)
 
 	prev_object = (wingui_window_object *)GetWindowLongPtr(handle, GWLP_USERDATA);
 	if (prev_object == NULL || prev_object->object_zval == NULL) {
-		/* TODO some day: get the window class get the appropriate CE besed on the class returned */
+		/* TODO some day: get the window class get the appropriate CE besed on the class returned 
 		zend_throw_exception(ce_wingui_exception, "Win\\Gui\\Windowing::getNext() could not retrieve the requested window - it may have not been created with wingui", 0 TSRMLS_CC);
 		return;
 	} else {
@@ -271,40 +269,101 @@ PHP_METHOD(WinGuiWindowing, getChild)
 }
 /* }}} */
 
-/* {{{ proto void Win\Gui\Windowing->getSize()
-        */
+/* {{{ proto object Win\Gui\Windowing->getSize()
+                    returns object with height and width of window area
+					note this is NOT client size */
 PHP_METHOD(WinGuiWindowing, getSize)
 {
+	BOOL worked;
+	RECT rect;
+
+	PHP_WINGUI_EXCEPTIONS
+	if (FAILURE == zend_parse_parameters_none()) {
+		return;
+	}
+	PHP_WINGUI_RESTORE_ERRORS
+
+	worked = GetWindowRect(wingui_window_get_handle(&getThis() TSRMLS_CC), &rect);
+	if (worked == 0) {
+		RETURN_FALSE;
+	}
+
+	object_init(return_value);
+	add_property_long(return_value, "height", (long) rect.bottom - rect.top);
+	add_property_long(return_value, "width", (long) rect.right - rect.left);
 }
 /* }}} */
 
-/* {{{ proto bool Win\Gui\Windowing->getText()
+/* {{{ proto object Win\Gui\Windowing->getPos()
+                    returns object with x and y position of top left
+					corner of window */
+PHP_METHOD(WinGuiWindowing, getPos)
+{
+	BOOL worked;
+	RECT rect;
+
+	PHP_WINGUI_EXCEPTIONS
+	if (FAILURE == zend_parse_parameters_none()) {
+		return;
+	}
+	PHP_WINGUI_RESTORE_ERRORS
+
+	worked = GetWindowRect(wingui_window_get_handle(&getThis() TSRMLS_CC), &rect);
+	if (worked == 0) {
+		RETURN_FALSE;
+	}
+
+	object_init(return_value);
+	add_property_long(return_value, "x", (long) rect.top);
+	add_property_long(return_value, "y", (long) rect.left);
+}
+/* }}} */
+
+/* {{{ proto object or string Win\Gui\Windowing->getText()
        gets the text set for the window */
 PHP_METHOD(WinGuiWindowing, getText)
 {
-	zend_error_handling error_handling;
-	char * window_text;
-	int str_len, worked_len;
-	wingui_window_object *window_object = (wingui_window_object*)zend_object_store_get_object(getThis() TSRMLS_CC);
+	HWND handle = wingui_window_get_handle(&getThis() TSRMLS_CC);
 
-	zend_replace_error_handling(EH_THROW, ce_wingui_argexception, &error_handling TSRMLS_CC);
-	if (zend_parse_parameters_none() == FAILURE) {
+	PHP_WINGUI_EXCEPTIONS
+	if (FAILURE == zend_parse_parameters_none()) {
 		return;
 	}
-	zend_restore_error_handling(&error_handling TSRMLS_CC);
+	PHP_WINGUI_RESTORE_ERRORS
 
-	/* First we need the length of the string for our buffer */
-	str_len = GetWindowTextLength(window_object->window_handle);
-	
-	/* Then we allocate a buffer and copy our text into it */
-	window_text = safe_emalloc(str_len, sizeof(char), 1);
-	worked_len = GetWindowText(window_object->window_handle, window_text, str_len + 1);
-	if (worked_len == 0) {
-		winsystem_create_error(GetLastError(), ce_wingui_exception TSRMLS_CC);
+	if(IsWindowUnicode(handle)) {
+		int text_len, text_copied;
+		wchar_t *text;
+
+		text_len = GetWindowTextLengthW(handle);
+		text = safe_emalloc(text_len, sizeof(wchar_t), 1);
+
+		text_copied = GetWindowTextW(handle, text, text_len + 1);
+
+		if (text_copied == 0) {
+			winsystem_create_error(GetLastError(), ce_winsystem_runtimeexception TSRMLS_CC);
+			return;
+		}
+
+		php_winsystem_unicode_create(&return_value, text, text_len TSRMLS_CC);
 		return;
-	}
 
-	RETURN_STRINGL(window_text, worked_len, 1);
+	} else {
+		int text_len, text_copied;
+		char * text;
+
+		text_len = GetWindowTextLengthA(handle);
+		text = safe_emalloc(text_len, sizeof(char), 1);
+
+		text_copied = GetWindowTextA(handle, text, text_len + 1);
+
+		if (text_copied == 0) {
+			winsystem_create_error(GetLastError(), ce_winsystem_runtimeexception TSRMLS_CC);
+			return;
+		}
+
+		RETURN_STRINGL(text, text_copied, 0);
+	}
 }
 /* }}} */
 
@@ -337,19 +396,17 @@ PHP_METHOD(WinGuiWindowing, isChild)
 /* }}} */
 
 /* {{{ proto bool Win\Gui\Windowing->isVisible()
-       True if the object is visible, or false.  This only shows the visible flag, not if item is clipped  */
+       True if the object is visible, or false.  This only shows the visible flag, not if item is clipped */  
 PHP_METHOD(WinGuiWindowing, isVisible)
 {
-	zend_error_handling error_handling;
-	wingui_window_object *window_object = (wingui_window_object*)zend_object_store_get_object(getThis() TSRMLS_CC);
-
-	zend_replace_error_handling(EH_THROW, ce_wingui_argexception, &error_handling TSRMLS_CC);
-	if (zend_parse_parameters_none() == FAILURE) {
+	PHP_WINGUI_EXCEPTIONS
+	if (FAILURE == zend_parse_parameters_none()) {
+		PHP_WINGUI_RESTORE_ERRORS
 		return;
 	}
-	zend_restore_error_handling(&error_handling TSRMLS_CC);
+	PHP_WINGUI_RESTORE_ERRORS
 
-	RETURN_BOOL(IsWindowVisible(window_object->window_handle));
+	RETURN_BOOL(IsWindowVisible(wingui_window_get_handle(&getThis() TSRMLS_CC)));
 }
 /* }}} */
 
@@ -403,7 +460,7 @@ PHP_METHOD(WinGuiWindowing, setPos)
 /* }}} */
 
 /* {{{ proto bool Win\Gui\Windowing->setText()
-       sets the caption on the window */
+       sets the caption on the window 
 PHP_METHOD(WinGuiWindowing, setText)
 {
 	zend_error_handling error_handling;
@@ -427,16 +484,20 @@ PHP_METHOD(WinGuiWindowing, setText)
        returns false if the object was previously hidden */
 PHP_METHOD(WinGuiWindowing, hide)
 {
-	zend_error_handling error_handling;
-	wingui_window_object *window_object = (wingui_window_object*)zend_object_store_get_object(getThis() TSRMLS_CC);
+	zend_bool async = FALSE;
 
-	zend_replace_error_handling(EH_THROW, ce_wingui_argexception, &error_handling TSRMLS_CC);
-	if (zend_parse_parameters_none() == FAILURE) {
+	PHP_WINGUI_EXCEPTIONS
+	if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|b", &async)) {
+		PHP_WINGUI_RESTORE_ERRORS
 		return;
 	}
-	zend_restore_error_handling(&error_handling TSRMLS_CC);
+	PHP_WINGUI_RESTORE_ERRORS
 
-	RETURN_BOOL(ShowWindow(window_object->window_handle, SW_HIDE));
+	if (TRUE == async) {
+		RETURN_BOOL(ShowWindowAsync(wingui_window_get_handle(&getThis() TSRMLS_CC), SW_HIDE));
+	} else {
+		RETURN_BOOL(ShowWindow(wingui_window_get_handle(&getThis() TSRMLS_CC), SW_HIDE));
+	}
 }
 /* }}} */
 
@@ -444,27 +505,26 @@ PHP_METHOD(WinGuiWindowing, hide)
        displays an object in its current size and position.
        if noactivate is true, then the object is not activated
        returns true if the object was previously visible
-       returns false if the object was previously hidden */
+       returns false if the object was previously hidden  */
 PHP_METHOD(WinGuiWindowing, show)
 {
-	zend_error_handling error_handling;
 	zend_bool noactivate = FALSE, async = FALSE;
 	int flag = SW_SHOW;
-	wingui_window_object *window_object = (wingui_window_object*)zend_object_store_get_object(getThis() TSRMLS_CC);
 
-	zend_replace_error_handling(EH_THROW, ce_wingui_argexception, &error_handling TSRMLS_CC);
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|bb", &noactivate, &async) == FAILURE) {
+	PHP_WINGUI_EXCEPTIONS
+	if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|bb", &noactivate, &async)) {
+		PHP_WINGUI_RESTORE_ERRORS
 		return;
 	}
-	zend_restore_error_handling(&error_handling TSRMLS_CC);
+	PHP_WINGUI_RESTORE_ERRORS
 
-	if (noactivate == TRUE) {
+	if (TRUE == noactivate) {
 		flag = SW_SHOWNA;
 	}
-	if (async == TRUE) {
-		RETURN_BOOL(ShowWindowAsync(window_object->window_handle, flag));
+	if (TRUE == async) {
+		RETURN_BOOL(ShowWindowAsync(wingui_window_get_handle(&getThis() TSRMLS_CC), flag));
 	} else {
-		RETURN_BOOL(ShowWindow(window_object->window_handle, flag));
+		RETURN_BOOL(ShowWindow(wingui_window_get_handle(&getThis() TSRMLS_CC), flag));
 	}
 }
 /* }}} */
@@ -475,40 +535,42 @@ PHP_METHOD(WinGuiWindowing, show)
 
 /* register Windowing methods */
 static zend_function_entry wingui_windowing_functions[] = {
-	PHP_ABSTRACT_ME(WinGuiWindowing, adjustSize, WinGuiWindowing_adjustSize_args)
-	PHP_ABSTRACT_ME(WinGuiWindowing, animateShow, WinGuiWindowing_animateShow_args)
-	PHP_ABSTRACT_ME(WinGuiWindowing, animateHide, WinGuiWindowing_animateHide_args)
-	PHP_ME(WinGuiWindowing, getChildFromPoint, NULL, ZEND_ACC_PUBLIC| ZEND_ACC_ABSTRACT)
-	PHP_ME(WinGuiWindowing, foreachChild, NULL, ZEND_ACC_PUBLIC| ZEND_ACC_ABSTRACT)
-	PHP_ME(WinGuiWindowing, findChild, NULL, ZEND_ACC_PUBLIC| ZEND_ACC_ABSTRACT)
-	PHP_ME(WinGuiWindowing, getAncestor, NULL, ZEND_ACC_PUBLIC| ZEND_ACC_ABSTRACT)
-	PHP_ME(WinGuiWindowing, getClientSize, NULL, ZEND_ACC_PUBLIC| ZEND_ACC_ABSTRACT)
-	PHP_ABSTRACT_ME(WinGuiWindowing, getNext, WinGuiWindowing_getNext_args)
-	PHP_ABSTRACT_ME(WinGuiWindowing, getPrevious, WinGuiWindowing_getPrevious_args)
-	PHP_ME(WinGuiWindowing, getParent, NULL, ZEND_ACC_PUBLIC| ZEND_ACC_ABSTRACT)
-	PHP_ME(WinGuiWindowing, getTopChild, NULL, ZEND_ACC_PUBLIC| ZEND_ACC_ABSTRACT)
-	PHP_ME(WinGuiWindowing, getOwner, NULL, ZEND_ACC_PUBLIC| ZEND_ACC_ABSTRACT)
-	PHP_ME(WinGuiWindowing, getFirst, NULL, ZEND_ACC_PUBLIC| ZEND_ACC_ABSTRACT)
-	PHP_ME(WinGuiWindowing, getLast, NULL, ZEND_ACC_PUBLIC| ZEND_ACC_ABSTRACT)
-	PHP_ME(WinGuiWindowing, getChild, NULL, ZEND_ACC_PUBLIC| ZEND_ACC_ABSTRACT)
-	PHP_ME(WinGuiWindowing, getSize, NULL, ZEND_ACC_PUBLIC| ZEND_ACC_ABSTRACT)
-	PHP_ME(WinGuiWindowing, getText, NULL, ZEND_ACC_PUBLIC| ZEND_ACC_ABSTRACT)
-	PHP_ME(WinGuiWindowing, getProcessId, NULL, ZEND_ACC_PUBLIC| ZEND_ACC_ABSTRACT)
-	PHP_ME(WinGuiWindowing, getPlacement, NULL, ZEND_ACC_PUBLIC| ZEND_ACC_ABSTRACT)
-	PHP_ME(WinGuiWindowing, getTextDirect, NULL, ZEND_ACC_PUBLIC| ZEND_ACC_ABSTRACT)
-	PHP_ME(WinGuiWindowing, isChild, NULL, ZEND_ACC_PUBLIC| ZEND_ACC_ABSTRACT)
-	PHP_ME(WinGuiWindowing, isVisible, NULL, ZEND_ACC_PUBLIC| ZEND_ACC_ABSTRACT)
-	PHP_ME(WinGuiWindowing, logicalToPhysical, NULL, ZEND_ACC_PUBLIC| ZEND_ACC_ABSTRACT)
-	PHP_ME(WinGuiWindowing, move, NULL, ZEND_ACC_PUBLIC| ZEND_ACC_ABSTRACT)
-	PHP_ME(WinGuiWindowing, physicalToLogical, NULL, ZEND_ACC_PUBLIC| ZEND_ACC_ABSTRACT)
-	PHP_ME(WinGuiWindowing, getVisibleChild, NULL, ZEND_ACC_PUBLIC| ZEND_ACC_ABSTRACT)
-	PHP_ME(WinGuiWindowing, setParent, NULL, ZEND_ACC_PUBLIC| ZEND_ACC_ABSTRACT)
-	PHP_ME(WinGuiWindowing, setPlacement, NULL, ZEND_ACC_PUBLIC| ZEND_ACC_ABSTRACT)
-	PHP_ME(WinGuiWindowing, setPos, NULL, ZEND_ACC_PUBLIC| ZEND_ACC_ABSTRACT)
-	PHP_ME(WinGuiWindowing, setText, NULL, ZEND_ACC_PUBLIC| ZEND_ACC_ABSTRACT)
+	//PHP_ABSTRACT_ME(WinGuiWindowing, adjustSize, WinGuiWindowing_adjustSize_args)
+	//PHP_ABSTRACT_ME(WinGuiWindowing, animateShow, WinGuiWindowing_animateShow_args)
+	//PHP_ABSTRACT_ME(WinGuiWindowing, animateHide, WinGuiWindowing_animateHide_args)
+	//PHP_ME(WinGuiWindowing, getChildFromPoint, NULL, ZEND_ACC_PUBLIC| ZEND_ACC_ABSTRACT)
+	//PHP_ME(WinGuiWindowing, foreachChild, NULL, ZEND_ACC_PUBLIC| ZEND_ACC_ABSTRACT)
+	//PHP_ME(WinGuiWindowing, findChild, NULL, ZEND_ACC_PUBLIC| ZEND_ACC_ABSTRACT)
+	//PHP_ME(WinGuiWindowing, getAncestor, NULL, ZEND_ACC_PUBLIC| ZEND_ACC_ABSTRACT)
+	//PHP_ME(WinGuiWindowing, getClientSize, NULL, ZEND_ACC_PUBLIC| ZEND_ACC_ABSTRACT)
+	//PHP_ABSTRACT_ME(WinGuiWindowing, getNext, WinGuiWindowing_getNext_args)
+	//PHP_ABSTRACT_ME(WinGuiWindowing, getPrevious, WinGuiWindowing_getPrevious_args)
+	//PHP_ME(WinGuiWindowing, getParent, NULL, ZEND_ACC_PUBLIC| ZEND_ACC_ABSTRACT)
+	//PHP_ME(WinGuiWindowing, getTopChild, NULL, ZEND_ACC_PUBLIC| ZEND_ACC_ABSTRACT)
+	//PHP_ME(WinGuiWindowing, getOwner, NULL, ZEND_ACC_PUBLIC| ZEND_ACC_ABSTRACT)
+	//PHP_ME(WinGuiWindowing, getFirst, NULL, ZEND_ACC_PUBLIC| ZEND_ACC_ABSTRACT)
+	//PHP_ME(WinGuiWindowing, getLast, NULL, ZEND_ACC_PUBLIC| ZEND_ACC_ABSTRACT)
+	//PHP_ME(WinGuiWindowing, getChild, NULL, ZEND_ACC_PUBLIC| ZEND_ACC_ABSTRACT)
+	//PHP_ME(WinGuiWindowing, getText, NULL, ZEND_ACC_PUBLIC| ZEND_ACC_ABSTRACT)
+	//PHP_ME(WinGuiWindowing, getProcessId, NULL, ZEND_ACC_PUBLIC| ZEND_ACC_ABSTRACT)
+	//PHP_ME(WinGuiWindowing, getPlacement, NULL, ZEND_ACC_PUBLIC| ZEND_ACC_ABSTRACT)
+	//PHP_ME(WinGuiWindowing, getTextDirect, NULL, ZEND_ACC_PUBLIC| ZEND_ACC_ABSTRACT)
+	//PHP_ME(WinGuiWindowing, isChild, NULL, ZEND_ACC_PUBLIC| ZEND_ACC_ABSTRACT)
+	//PHP_ME(WinGuiWindowing, logicalToPhysical, NULL, ZEND_ACC_PUBLIC| ZEND_ACC_ABSTRACT)
+	//PHP_ME(WinGuiWindowing, move, NULL, ZEND_ACC_PUBLIC| ZEND_ACC_ABSTRACT)
+	//PHP_ME(WinGuiWindowing, physicalToLogical, NULL, ZEND_ACC_PUBLIC| ZEND_ACC_ABSTRACT)
+	//PHP_ME(WinGuiWindowing, getVisibleChild, NULL, ZEND_ACC_PUBLIC| ZEND_ACC_ABSTRACT)
+	//PHP_ME(WinGuiWindowing, setParent, NULL, ZEND_ACC_PUBLIC| ZEND_ACC_ABSTRACT)
+	//PHP_ME(WinGuiWindowing, setPlacement, NULL, ZEND_ACC_PUBLIC| ZEND_ACC_ABSTRACT)
+	//PHP_ME(WinGuiWindowing, setPos, NULL, ZEND_ACC_PUBLIC| ZEND_ACC_ABSTRACT)
+	//PHP_ME(WinGuiWindowing, setText, NULL, ZEND_ACC_PUBLIC| ZEND_ACC_ABSTRACT)
+	PHP_ABSTRACT_ME(WinGuiWindowing, isVisible, WinGuiWindowing_isVisible_args)
 	PHP_ABSTRACT_ME(WinGuiWindowing, show, WinGuiWindowing_show_args)
 	PHP_ABSTRACT_ME(WinGuiWindowing, hide, WinGuiWindowing_hide_args)
-	{NULL, NULL, NULL}
+	PHP_ABSTRACT_ME(WinGuiWindowing, getSize, WinGuiWindowing_getSize_args)
+	PHP_ABSTRACT_ME(WinGuiWindowing, getPos, WinGuiWindowing_getPos_args)
+	PHP_ABSTRACT_ME(WinGuiWindowing, getText, WinGuiWindowing_getText_args)
+	ZEND_FE_END
 };
 
 /* ----------------------------------------------------------------
@@ -527,7 +589,7 @@ PHP_MINIT_FUNCTION(wingui_windowing)
 	ce_wingui_windowing->ce_flags |= ZEND_ACC_INTERFACE;
 
 	/* Property map for all items that implement windowing */
-	zend_hash_init(&wingui_windowing_prop_handlers, 0, NULL, NULL, 1);
+	//zend_hash_init(&wingui_windowing_prop_handlers, 0, NULL, NULL, 1);
 	//wingui_register_prop_handler(&wingui_windowing_prop_handlers, ce_wingui_window, "x", wingui_window_read_pos, wingui_window_write_size TSRMLS_CC);
 	//wingui_register_prop_handler(&wingui_windowing_prop_handlers, ce_wingui_window, "y", wingui_window_read_pos, wingui_window_write_size TSRMLS_CC);
 	//wingui_register_prop_handler(&wingui_windowing_prop_handlers, ce_wingui_window, "width", wingui_window_read_size, wingui_window_write_size TSRMLS_CC);

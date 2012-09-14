@@ -5,3 +5,8 @@ This needs lots of work
 3. finish all functions
 4. finish tests for windows
 5. move on to resources and common controls
+
+Explicit todos:
+Inputing interface
+1. tests for register and unregister hotkey (requires key modifiers and virtual keys - class constants or enums - capturing WM_HOTKEY and sending input)
+2. tests for dragdetect and capture mouse - not sure how to test those properly yet

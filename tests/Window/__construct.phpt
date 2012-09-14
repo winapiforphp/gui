@@ -2,41 +2,69 @@
 Win\Gui\Window->__construct() method
 --SKIPIF--
 <?php
-if(!extension_loaded('wingui')) die('skip - wingui extension not available');
+include __DIR__ . '/../../skipif.inc';
 ?>
 --FILE--
 <?php
 use Win\Gui\Window;
-use Win\Gui\ArgumentException;
-
 use Win\System\Unicode;
-use Win\System\CodePage;
+use Win\System\Codepage;
+use Win\System\InvalidArgumentException;
 
-// window with all defaults
-$window = new Window;
-var_dump($window->type == Window::TOPLEVEL);
+/* Part 1 - testing setting the window title via construct arguments
+   a) default title
+   b) default title forcing unicode
+   c) ansi title
+   d) uft8 title forcing unicode
+   e) utf16 title
+   */
+$window = new Window([]);
+echo $window->getText(), PHP_EOL;
 
-// Window with the three different types
-$toplevel = new Window(array('type' => Window::TOPLEVEL));
-var_dump($toplevel->type == Window::TOPLEVEL);
+$window = new Window(['text' => 'mywindow']);
+echo $window->getText(), PHP_EOL;
 
-$popup = new Window(array('type' => Window::POPUP));
-var_dump($toplevel->type == Window::TOPLEVEL);
+$string = 'काचं शक्नोम्यत्तुम् । नोपहिनस्ति माम् ॥';
+$window = new Window(['text' => $string, 'use_unicode' => true]);
+echo $window->getText(), PHP_EOL;
 
-$child = new Window(array('type' => Window::CHILD,
-                          'text' => "A window",
-                          'parent' => $toplevel));
-var_dump($toplevel->type == Window::TOPLEVEL);
+$unicode = new Unicode(file_get_contents(__DIR__ . '/../utf16.txt'), new CodePage(CodePage::UTF16));
+$window = new Window(['text' => $unicode]);
+echo $window->getText(), PHP_EOL;
 
-// text in a window
-$window = new Window(array('type' => Window::TOPLEVEL,
-                           'text' => "My text"));
-var_dump($window->text == "My text");
+/* Part 2 - testing x, y, height and width */
+$window = new Window(['x' => 100, 'y' => 100, 'width' => 300, 'height' => 300]);
+var_dump($window->getSize());
+var_dump($window->getPos());
 
+/* Part 3 - window styles - lots of various flags */
+$window = new Window([]);
+var_dump($window->isEnabled());
+$window = new Window(['disable' => true]);
+var_dump($window->isEnabled());
+
+/* TODO YET: 
+	// TODO: style and extrastyle parsing
+	// TODO: parent
+	// TODO: menu
+	// TODO: classname */
 ?>
---EXPECTF--
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
+= DONE =
+--EXPECT--
+Window
+mywindow
+काचं शक्नोम्यत्तुम् । नोपहिनस्ति माम् ॥
+﻿日本語
+object(stdClass)#3 (2) {
+  ["height"]=>
+  int(300)
+  ["width"]=>
+  int(300)
+}
+object(stdClass)#3 (2) {
+  ["x"]=>
+  int(100)
+  ["y"]=>
+  int(100)
+}
+= DONE =
