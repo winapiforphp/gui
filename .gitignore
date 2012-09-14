@@ -1,0 +1,32 @@
+# OS Specific
+Thumbs.db
+
+# Object files
+*.obj
+
+# Shared objects (inc. Windows DLLs)
+*.dll
+
+# Executables
+*.exe
+
+# Visual Studio
+*.sbr
+*.suo
+*.user
+*.ncb
+
+# Test specific Ignores
+tests/*.diff
+tests/*.out
+tests/*.php
+tests/*.exp
+tests/*.log
+tests/*.sh
+tests/*/*.diff
+tests/*/*.out
+tests/*/*.php
+tests/*/*.exp
+tests/*/*.log
+tests/*/*.sh
+run-tests.php
