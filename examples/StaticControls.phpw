@@ -1,12 +1,20 @@
 <?php
 // The classes we are using
 use Win\Gui\Window;
-use Win\Gui\Resource\Bitmap;
-use Win\Gui\Resource\Icon;
-use Win\Gui\Resource\Cursor;
+use Win\Gui\Window\Message as WM;
+use Win\Gui\Message\Queue;
+
 use Win\Gui\Control\Text;
-use Win\Gui\Control\Image;
-use Win\Gui\Control\Frame;
+
+use Win\System\CodePage;
+use Win\System\Unicode;
+
+//use Win\Gui\Resource\Bitmap;
+//use Win\Gui\Resource\Icon;
+//use Win\Gui\Resource\Cursor;
+
+//use Win\Gui\Control\Image;
+//use Win\Gui\Control\Frame;
 
 // the text for our big text box
 $label = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris et
@@ -33,44 +41,48 @@ Maecenas sed arcu at elit porta semper. Aliquam eget enim vel risus blandit
 aliquet.';
 
 // create window to hold our controls
-$window = new Window;
+$window = new Window(['text' => 'Static Controls Demo']);
 
-// create a text box with our big chunk of text, notice we remove the eols and let windows wrap it
-$label = new Text($window, str_replace(PHP_EOL, ' ', $label));
-$label->show();
+// create a text box with our big chunk of text, notice we remove the eols and let the control wrap it
+$text = new Text($window, str_replace(PHP_EOL, ' ', $label), ['visible' => true, 'align' => Text::LEFT, 'autosize' => true]);
+$pos = $text->getSize();
+
+// create a unicode text box with utf16 data
+$unicode = new Text($window,
+                    new Unicode(file_get_contents(__DIR__ . '/utf16.txt'), new CodePage(CodePage::UTF16)),
+                    ['visible' => true, 'y' => $pos->height, 'autosize' => true, 'simple' => true]);
 
 // Load the bitmap and stick it in an image control
-$bitmap = new Bitmap(__DIR__ . '\passionflower.bmp');
-$picture = new Image($window, $bitmap, array('x' => $label->width));
-$picture->show();
+//$bitmap = new Bitmap(__DIR__ . '\passionflower.bmp');
+//$picture = new Image($window, $bitmap, array('x' => $label->width));
+//$picture->show();
 
 // make some frames
-$frame = new Frame($window, false, Frame::FRAME_COLOR, array('y' => $label->height, 'height' => 50, 'width' => $label->width));
-$frame->show();
+//$frame = new Frame($window, false, Frame::FRAME_COLOR, array('y' => $label->height, 'height' => 50, 'width' => $label->width));
+//$frame->show();
 
 // make another frame 8 pixels smaller and put it inside
-$frame = new Frame($frame, true, Frame::BACKGROUND_COLOR, array('height' => $frame->height - 8,
-                                                             'width'  => $frame->width - 8,
-                                                             'x' => 4,
-                                                             'y' => 4));
-$frame->show();
+//$frame = new Frame($frame, true, Frame::BACKGROUND_COLOR, array('height' => $frame->height - 8,
+//                                                             'width'  => $frame->width - 8,
+//                                                             'x' => 4,
+//                                                             'y' => 4));
+//$frame->show();
 
 // load an icon - notice that width and height must be set on the icon
-$icon = new Icon(__DIR__ . '\flower.ico', 80, 80);
-$picture2 = new Image($window, $icon, array('x' => $label->width, 'y' => $picture->height));
-$picture2->show();
+//$icon = new Icon(__DIR__ . '\flower.ico', 80, 80);
+//$picture2 = new Image($window, $icon, array('x' => $label->width, 'y' => $picture->height));
+//$picture2->show();
 
 // load an animated cursor
-$cursor = new Cursor(__DIR__ . '\happyflower.ani');
-$picture3 = new Image($window, $cursor, array('x' => $label->width, 'y' => $picture->height + $picture2->height));
-$picture3->show();
+//$cursor = new Cursor(__DIR__ . '\happyflower.ani');
+//$picture3 = new Image($window, $cursor, array('x' => $label->width, 'y' => $picture->height + $picture2->height));
+//$picture3->show();
 
 // show the window
 $window->show();
 
 // tell the application to quit completely when the window is destroyed
-$window->connectSimple(Window::WM_DESTROY, array('Win\Gui\Message', 'postQuit'));
+$window->connectSimple(WM::DESTROY, array('Win\Gui\Message\Queue', 'postQuit'));
 
 // start the main loop
-Win\Gui\Message::run();
-?>
+Queue::start();

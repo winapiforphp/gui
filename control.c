@@ -2,7 +2,7 @@
   +----------------------------------------------------------------------+
   | PHP Version 5                                                        |
   +----------------------------------------------------------------------+
-  | Copyright (c) 1997-2011 The PHP Group                                |
+  | Copyright (c) 1997-2012 The PHP Group                                |
   +----------------------------------------------------------------------+
   | This source file is subject to version 3.01 of the PHP license,      |
   | that is bundled with this package in the file LICENSE, and is        |
@@ -12,20 +12,13 @@
   | obtain it through the world-wide-web, please send a note to          |
   | license@php.net so we can mail you a copy immediately.               |
   +----------------------------------------------------------------------+
-  | Author: Elizabeth Smith <auroraeosrose@php.net>                      |
+  | Author: Elizabeth M Smith <auroraeosrose@gmail.com>                  |
   +----------------------------------------------------------------------+
 */
 
 #include "php_wingui.h"
-#include "zend_exceptions.h"
-#include "php_winsystem_api.h"
-#include "implement_control.h"
 
-/* All used by other classes, none static */
 zend_class_entry *ce_wingui_control;
-
-HashTable wingui_control_prop_handlers;
-HashTable wingui_control_callback_map;
 
 /* ----------------------------------------------------------------
   Win\Gui\Control Userland API
@@ -33,7 +26,7 @@ HashTable wingui_control_callback_map;
 
 /* register Control methods */
 static zend_function_entry wingui_control_functions[] = {
-	{NULL, NULL, NULL}
+	ZEND_FE_END
 };
 
 /* ----------------------------------------------------------------
@@ -42,13 +35,20 @@ static zend_function_entry wingui_control_functions[] = {
 PHP_MINIT_FUNCTION(wingui_control)
 {
 	zend_class_entry ce;
+	INITCOMMONCONTROLSEX icex;
+
+	/* Initiate windows common controls so we can use them all */
+	icex.dwSize = sizeof(icex);
+	icex.dwICC  = ICC_BAR_CLASSES | ICC_COOL_CLASSES;
+	InitCommonControls();
+	InitCommonControlsEx(&icex);
 
 	INIT_NS_CLASS_ENTRY(ce, PHP_WINGUI_NS, "Control", wingui_control_functions);
 	ce_wingui_control = zend_register_internal_class(&ce TSRMLS_CC);
 	ce_wingui_control->ce_flags |= ZEND_ACC_INTERFACE;
 
-	zend_hash_init(&wingui_control_prop_handlers, 0, NULL, NULL, 1);
-	zend_hash_init(&wingui_control_callback_map, 0, NULL, NULL, 1);
+	//zend_hash_init(&wingui_control_prop_handlers, 0, NULL, NULL, 1);
+	//zend_hash_init(&wingui_control_callback_map, 0, NULL, NULL, 1);
 
 	return SUCCESS;
 }
@@ -56,8 +56,8 @@ PHP_MINIT_FUNCTION(wingui_control)
 /* {{{ PHP_MSHUTDOWN_FUNCTION(wingui_control) */
 PHP_MSHUTDOWN_FUNCTION(wingui_control)
 {
-	zend_hash_destroy(&wingui_control_prop_handlers);
-	zend_hash_destroy(&wingui_control_callback_map);
+	//zend_hash_destroy(&wingui_control_prop_handlers);
+	//zend_hash_destroy(&wingui_control_callback_map);
 	return SUCCESS;
 }
 /* }}} */

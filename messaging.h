@@ -2,7 +2,7 @@
   +----------------------------------------------------------------------+
   | PHP Version 5                                                        |
   +----------------------------------------------------------------------+
-  | Copyright (c) 2007-2011 Elizabeth M. Smith, Sara Golemon, Tom Rogers |
+  | Copyright (c) 1997-2012 The PHP Group                                |
   +----------------------------------------------------------------------+
   | This source file is subject to version 3.01 of the PHP license,      |
   | that is bundled with this package in the file LICENSE, and is        |
@@ -12,7 +12,7 @@
   | obtain it through the world-wide-web, please send a note to          |
   | license@php.net so we can mail you a copy immediately.               |
   +----------------------------------------------------------------------+
-  | Author: Elizabeth M. Smith <auroraeosrose@php.net>                   |
+  | Author: Elizabeth M Smith <auroraeosrose@gmail.com>                  |
   +----------------------------------------------------------------------+
 */
 
@@ -86,6 +86,12 @@ extern PHP_METHOD(WinGuiMessaging, send);
 extern PHP_METHOD(WinGuiMessaging, sendNotify);
 extern PHP_METHOD(WinGuiMessaging, sendTimeout);
 extern PHP_METHOD(WinGuiMessaging, sendCallback);
+
+LRESULT CALLBACK wingui_proc_handler(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
+void wingui_messaging_destructor_helper(HashTable *registered_callbacks TSRMLS_DC);
+
+/* All the classes in this file */
+extern zend_class_entry *ce_wingui_messaging;
 
 #endif
 

@@ -1,8 +1,8 @@
-/*
+/* 
   +----------------------------------------------------------------------+
   | PHP Version 5                                                        |
   +----------------------------------------------------------------------+
-  | Copyright (c) 1997-2011 The PHP Group                                |
+  | Copyright (c) 1997-2012 The PHP Group                                |
   +----------------------------------------------------------------------+
   | This source file is subject to version 3.01 of the PHP license,      |
   | that is bundled with this package in the file LICENSE, and is        |
@@ -12,17 +12,24 @@
   | obtain it through the world-wide-web, please send a note to          |
   | license@php.net so we can mail you a copy immediately.               |
   +----------------------------------------------------------------------+
-  | Author: Elizabeth Smith <auroraeosrose@php.net>                      |
+  | Author: Elizabeth Smith <auroraeosrose@gmail.com>                    |
   +----------------------------------------------------------------------+
 */
 
 #include "php_wingui.h"
-#include "zend_exceptions.h"
 
 zend_class_entry *ce_wingui_message;
 HashTable wingui_message_prop_handlers;
 static zend_object_handlers wingui_message_object_handlers;
 static zend_function wingui_message_constructor_wrapper;
+
+struct _wingui_message_object {
+	zend_object   std;
+	zend_bool     is_constructed;
+	MSG          *msg;
+	long          message;
+	zval        **params;
+};
 
 /* ----------------------------------------------------------------
   Win\Gui\Message Userland API
@@ -236,7 +243,7 @@ static zend_function_entry wingui_message_functions[] = {
 	PHP_ME(WinGuiMessage, sendTimeout, WinGuiMessage_sendTimeout_args, ZEND_ACC_PUBLIC)
 	PHP_ME(WinGuiMessage, sendNotify, WinGuiMessage_sendNotify_args, ZEND_ACC_PUBLIC)
 	PHP_ME(WinGuiMessage, translate, WinGuiMessage_translate_args, ZEND_ACC_PUBLIC)
-	{NULL, NULL, NULL}
+	ZEND_FE_END
 };
 
 /* ----------------------------------------------------------------
@@ -252,6 +259,52 @@ static zend_function *wingui_message_get_constructor(zval *object TSRMLS_DC)
 			get_constructor(object TSRMLS_CC);
 	else
 		return &wingui_message_constructor_wrapper;
+}
+/* }}} */
+
+/* {{{ wingui_message_construction_wrapper */
+static void wingui_message_construction_wrapper(INTERNAL_FUNCTION_PARAMETERS)
+{
+	zval *this = getThis();
+	wingui_message_object *tobj;
+	zend_class_entry *this_ce;
+	zend_function *zf;
+	zend_fcall_info fci = {0};
+	zend_fcall_info_cache fci_cache = {0};
+	zval *retval_ptr = NULL;
+	unsigned i;
+ 
+	tobj = zend_object_store_get_object(this TSRMLS_CC);
+	zf = zend_get_std_object_handlers()->get_constructor(this TSRMLS_CC);
+	this_ce = Z_OBJCE_P(this);
+ 
+	fci.size = sizeof(fci);
+	fci.function_table = &this_ce->function_table;
+	fci.object_ptr = this;
+	/* fci.function_name = ; not necessary to bother */
+	fci.retval_ptr_ptr = &retval_ptr;
+	fci.param_count = ZEND_NUM_ARGS();
+	fci.params = emalloc(fci.param_count * sizeof *fci.params);
+	/* Or use _zend_get_parameters_array_ex instead of loop: */
+	for (i = 0; i < fci.param_count; i++) {
+		fci.params[i] = (zval **) (zend_vm_stack_top(TSRMLS_C) - 1 -
+			(fci.param_count - i));
+	}
+	fci.object_ptr = this;
+	fci.no_separation = 0;
+ 
+	fci_cache.initialized = 1;
+	fci_cache.called_scope = EG(current_execute_data)->called_scope;
+	fci_cache.calling_scope = EG(current_execute_data)->current_scope;
+	fci_cache.function_handler = zf;
+	fci_cache.object_ptr = this;
+ 
+	zend_call_function(&fci, &fci_cache TSRMLS_CC);
+	if (!EG(exception) && tobj->is_constructed == 0)
+		zend_throw_exception_ex(ce_winsystem_runtimeexception, 0 TSRMLS_CC,
+			"parent::__construct() must be called in %s::__construct()", this_ce->name);
+	efree(fci.params);
+	zval_ptr_dtor(&retval_ptr);
 }
 /* }}} */
 
@@ -353,22 +406,19 @@ PHP_MINIT_FUNCTION(wingui_message)
 	wingui_message_constructor_wrapper.common.prototype = NULL;
 	wingui_message_constructor_wrapper.common.required_num_args = 0;
 	wingui_message_constructor_wrapper.common.arg_info = NULL;
-	wingui_message_constructor_wrapper.common.pass_rest_by_reference = 0;
-	wingui_message_constructor_wrapper.common.return_reference = 0;
-	wingui_message_constructor_wrapper.internal_function.handler = wingui_object_construction_wrapper;
+	wingui_message_constructor_wrapper.internal_function.handler = wingui_message_construction_wrapper;
 	wingui_message_constructor_wrapper.internal_function.module = EG(current_module);
 
-	memcpy(&wingui_message_object_handlers, &wingui_object_handlers,
-		sizeof wingui_message_object_handlers);
+	memcpy(&wingui_message_object_handlers, &std_object_handlers, sizeof(zend_object_handlers));
 	wingui_message_object_handlers.get_constructor = wingui_message_get_constructor;
 
-	zend_hash_init(&wingui_message_prop_handlers, 0, NULL, NULL, 1);
-	wingui_register_prop_handler(&wingui_message_prop_handlers, ce_wingui_message, "window", wingui_message_read, NULL TSRMLS_CC);
-	wingui_register_prop_handler(&wingui_message_prop_handlers, ce_wingui_message, "message", wingui_message_read, NULL TSRMLS_CC);
-	wingui_register_prop_handler(&wingui_message_prop_handlers, ce_wingui_message, "time", wingui_message_read, NULL TSRMLS_CC);
-	wingui_register_prop_handler(&wingui_message_prop_handlers, ce_wingui_message, "params", wingui_message_read, NULL TSRMLS_CC);
-	wingui_register_prop_handler(&wingui_message_prop_handlers, ce_wingui_message, "x", wingui_message_read, NULL TSRMLS_CC);
-	wingui_register_prop_handler(&wingui_message_prop_handlers, ce_wingui_message, "y", wingui_message_read, NULL TSRMLS_CC);
+	//zend_hash_init(&wingui_message_prop_handlers, 0, NULL, NULL, 1);
+	//wingui_register_prop_handler(&wingui_message_prop_handlers, ce_wingui_message, "window", wingui_message_read, NULL TSRMLS_CC);
+	//wingui_register_prop_handler(&wingui_message_prop_handlers, ce_wingui_message, "message", wingui_message_read, NULL TSRMLS_CC);
+	////wingui_register_prop_handler(&wingui_message_prop_handlers, ce_wingui_message, "time", wingui_message_read, NULL TSRMLS_CC);
+	//wingui_register_prop_handler(&wingui_message_prop_handlers, ce_wingui_message, "params", wingui_message_read, NULL TSRMLS_CC);
+	//wingui_register_prop_handler(&wingui_message_prop_handlers, ce_wingui_message, "x", wingui_message_read, NULL TSRMLS_CC);
+	//wingui_register_prop_handler(&wingui_message_prop_handlers, ce_wingui_message, "y", wingui_message_read, NULL TSRMLS_CC);
 
 	return SUCCESS;
 }

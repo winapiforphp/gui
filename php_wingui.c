@@ -25,22 +25,17 @@
 /* Register classes and set up globals and common controls stuff */
 PHP_MINIT_FUNCTION(wingui)
 {
-	INITCOMMONCONTROLSEX icex;
-
-	/* Initiate windows common controls so we can use them all */
-	icex.dwSize = sizeof(icex);
-	icex.dwICC  = ICC_BAR_CLASSES | ICC_COOL_CLASSES;
-	InitCommonControls();
-	InitCommonControlsEx(&icex);
+	/* Enums */
+	PHP_MINIT(wingui_windowmessage)(INIT_FUNC_ARGS_PASSTHRU);
 
 	/* Interfaces */
-	//PHP_MINIT(wingui_messaging)(INIT_FUNC_ARGS_PASSTHRU);
-	//PHP_MINIT(wingui_inputing)(INIT_FUNC_ARGS_PASSTHRU);
+	PHP_MINIT(wingui_messaging)(INIT_FUNC_ARGS_PASSTHRU);
+	PHP_MINIT(wingui_inputing)(INIT_FUNC_ARGS_PASSTHRU);
 	PHP_MINIT(wingui_windowing)(INIT_FUNC_ARGS_PASSTHRU);
 
 	/* Tools */
 	PHP_MINIT(wingui_message_queue)(INIT_FUNC_ARGS_PASSTHRU);
-	//PHP_MINIT(wingui_message)(INIT_FUNC_ARGS_PASSTHRU);
+	PHP_MINIT(wingui_message)(INIT_FUNC_ARGS_PASSTHRU);
 	//PHP_MINIT(wingui_input)(INIT_FUNC_ARGS_PASSTHRU);
 	PHP_MINIT(wingui_window)(INIT_FUNC_ARGS_PASSTHRU);
 
@@ -55,10 +50,10 @@ PHP_MINIT_FUNCTION(wingui)
 	//PHP_MINIT(wingui_menu)(INIT_FUNC_ARGS_PASSTHRU);
 
 	/* Controls */
-	//PHP_MINIT(wingui_control)(INIT_FUNC_ARGS_PASSTHRU);
+	PHP_MINIT(wingui_control)(INIT_FUNC_ARGS_PASSTHRU);
 	//PHP_MINIT(wingui_control_button)(INIT_FUNC_ARGS_PASSTHRU);
 	//PHP_MINIT(wingui_control_listview)(INIT_FUNC_ARGS_PASSTHRU);
-	//PHP_MINIT(wingui_control_static)(INIT_FUNC_ARGS_PASSTHRU);
+	PHP_MINIT(wingui_control_static)(INIT_FUNC_ARGS_PASSTHRU);
 	//PHP_MINIT(wingui_control_statusbar)(INIT_FUNC_ARGS_PASSTHRU);
 
 	return SUCCESS;
@@ -103,7 +98,7 @@ zend_module_entry wingui_module_entry = {
 /* Required for dynamic linking */
 #ifdef COMPILE_DL_WINGUI
 ZEND_GET_MODULE(wingui)
-#endif
+#endif	
 
 /*
  * Local variables:

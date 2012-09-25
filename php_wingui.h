@@ -71,13 +71,13 @@ zend_declare_class_constant_long(ce, const_name, sizeof(const_name)-1, (long)val
 
 /* struct typedefs */
 typedef struct _wingui_window_object wingui_window_object;
+typedef struct _wingui_callback_t wingui_callback_t;
+typedef struct _wingui_message_object wingui_message_object;
 
 /* ----------------------------------------------------------------
   Class Entries                                              
 ------------------------------------------------------------------*/
-
-extern zend_class_entry *ce_wingui_exception;
-extern zend_class_entry *ce_wingui_versionexception;
+extern zend_class_entry *ce_wingui_window;
 
 /* ----------------------------------------------------------------
   Macros                                               
@@ -94,10 +94,47 @@ LRESULT CALLBACK wingui_proc_handler(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
   C API                                             
 ------------------------------------------------------------------*/
 HWND wingui_window_get_handle(zval** window TSRMLS_DC);
+HashTable *wingui_window_get_callbacks(zval** window TSRMLS_DC);
+#ifdef ZTS
+void*** wingui_window_get_tsrm(wingui_window_object *window_object);
+#endif
+HashTable *wingui_window_get_callbacks_struct(wingui_window_object *window_object);
+WNDPROC wingui_window_get_proc(wingui_window_object *window_object);
 
+zend_object_value wingui_window_object_create_ex(zend_class_entry *ce, zend_object_handlers *handlers TSRMLS_DC);
+void wingui_window_object_free(void *object TSRMLS_DC);
+void wingui_window_create_new(wingui_window_object *window_object, HWND window_handle, zend_bool use_unicode);
+
+int wingui_window_get_size(HashTable *options, long *x, long *y, long *width, long *height TSRMLS_DC);
 /* ----------------------------------------------------------------
   Object Globals, lifecycle and static linking                 
 ------------------------------------------------------------------*/
+
+/* Lifecycle Function Declarations */
+PHP_MINIT_FUNCTION(wingui);
+PHP_MSHUTDOWN_FUNCTION(wingui);
+PHP_RINIT_FUNCTION(wingui);
+PHP_MINFO_FUNCTION(wingui);
+
+/* Enums */
+PHP_MINIT_FUNCTION(wingui_windowmessage);
+
+/* Interfaces */
+PHP_MINIT_FUNCTION(wingui_messaging);
+PHP_MINIT_FUNCTION(wingui_inputing);
+PHP_MINIT_FUNCTION(wingui_windowing);
+
+/* Tools */
+PHP_MINIT_FUNCTION(wingui_message_queue);
+PHP_MINIT_FUNCTION(wingui_message);
+PHP_MINIT_FUNCTION(wingui_window);
+
+/* Controls */
+PHP_MINIT_FUNCTION(wingui_control);
+PHP_MINIT_FUNCTION(wingui_control_static);
+
+/* Shutdowns */
+PHP_MSHUTDOWN_FUNCTION(wingui_window);
 
 /* Required for static linking */
 extern zend_module_entry wingui_module_entry;

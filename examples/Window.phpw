@@ -1,13 +1,20 @@
 <?php
 use Win\Gui\Window;
+use Win\Gui\Window\Message as WM;
+
+use Win\Gui\Message\Queue;
+
 use Win\System\Unicode;
 use Win\System\Codepage;
 
-$window = new Window(['text' => 'Control Examples', 'classname' => 'php_wingui_window_ansi']);
-echo $window->getText();
+$window = new Window(['text' => 'Control Examples']);
+$window->show();
+$window->connectSimple(WM::DESTROY, array('Win\Gui\Message\Queue', 'postQuit'));
+$window->connectSimple(WM::SIZE, function() {echo 'foobar';});
+Queue::start();
 
 
-//Reflection::export(new ReflectionExtension('wingui'));
+Reflection::export(new ReflectionExtension('wingui'));
 
 /*
 use Win\Gui\Menu;
@@ -46,10 +53,10 @@ $picture3 = new Picture($window, $cursor, array('y' => $label->height + $picture
 $picture3->show();
 
 // show the window and wait 5 seconds, then destroy it
-$window->show();
+
 
 // tell the application to quit completely when the window is destroyed
-$window->connectSimple(Window::WM_CLOSE, array('Win\Gui\Message', 'end'));
+
 
 // start the main loop
 Win\Gui\Message::run();
